@@ -1,0 +1,25 @@
+{
+  "name": "pulsera",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/mobile"
+  ],
+  "scripts": {
+    "install:all": "npm install --workspaces",
+    "lint:all": "npm run lint --workspace web && npm run lint --workspace pulsera-mobile",
+    "dev:web": "npm run dev --workspace web",
+    "dev:mobile": "npm run start --workspace pulsera-mobile",
+    "dev:server": "cd apps/server && uvicorn src.server.main:app --reload --port 8000",
+    "lint:server": "cd apps/server && make lint",
+    "test:server": "cd apps/server && make test",
+    "check:types:server": "cd apps/server && make check-types",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md,yml,yaml}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "shadcn": "^3.8.4"
+  }
+}
+
