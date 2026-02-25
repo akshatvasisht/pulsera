@@ -1,9 +1,5 @@
 <p align="center">
-  <img 
-    src="docs/assets/pulserareference.png" 
-    alt="Pulsera Logo" 
-    width="800"
-  />
+  <img width="400" height="200" alt="Pulsera logo" src="docs/assets/pulserareference.png" />
 </p>
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)
@@ -33,17 +29,19 @@ Pulsera is a real-time community safety platform that uses Apple Watch vitals, i
 
 ## How It Works
 
-1. **Watch detects anomaly** — Apple Watch streams heart rate and HRV via HealthKit. When vitals cross thresholds, an episode begins.
-2. **AI calming intervention** — An ElevenLabs conversational AI agent guides the wearer through breathing exercises with real-time voice and haptic feedback.
-3. **Contactless check-in** — The wearer performs a Quick Check-In on their phone using the front camera (SmartSpectra SDK) to capture pulse, breathing rate, and facial expression without any contact.
-4. **Family gets notified** — Caregivers receive real-time popups on the mobile app showing heart rate data, episode status, and Presage AI analysis results.
-5. **Community-wide detection** — PulseNet, a custom PyTorch anomaly detection model, aggregates signals across community members to detect zone-wide events (e.g., building emergencies).
+1. **Input / Ingestion:** Apple Watch streams heart rate and HRV via HealthKit; iPhone front camera captures pulse and facial expressions via SmartSpectra SDK.
+2. **Processing / Validation:** PulseNet (PyTorch) analyzes individual vitals against historical thresholds and correlates signals across the community to detect zone-wide events.
+3. **Execution / State Update:** The system initiates a real-time episode flow, triggering an ElevenLabs AI calming agent for the wearer and updating the backend state.
+4. **Output / Response:** Caregivers receive real-time alerts via the mobile hub, while the web dashboard generates 3D terrain heatmaps of safety status.
 
-## Apps
+<details>
+  <summary><b>View Demo</b></summary>
+  <p align="center">
+    <img src="docs/assets/pulsera-web.gif" alt="Pulsera Demo" width="800">
+  </p>
+</details>
 
-<p align="center">
-  <img src="docs/assets/pulsera-web.gif" alt="Pulsera Demo" width="800">
-</p>
+---
 
 | App | Tech | Description |
 |-----|------|-------------|

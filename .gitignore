@@ -10,5 +10,6 @@ Vene/
 ios/
 android/
 .expo/
+*.egg-info/
 dist/
 apps/server/checkpoints/

@@ -6,9 +6,14 @@ This document outlines the testing strategy, tools, and procedures for Pulsera.
 
 Pulsera uses a **pragmatic testing approach** prioritizing:
 
-1. **Unit tests** for business logic (episode detection, HRV calculation, PulseNet inference)
-2. **Integration tests** for API endpoints and database operations
-3. **Manual verification** for platform-specific features (HealthKit, camera integration, 3D rendering)
+1.  **Unit tests** for business logic (episode detection, HRV calculation, PulseNet inference)
+2.  **Integration tests** for API endpoints and database operations
+3.  **Manual verification** for platform-specific features (HealthKit, camera integration, 3D rendering)
+
+### Test Types
+*   **Unit Tests:** Test individual functions or modules in isolation. They are fast, deterministic, and verify core logic.
+*   **Integration Tests:** Verify that multiple components (e.g., database, external services) work together correctly.
+*   **End-to-End (E2E) Tests:** Validate the entire system pipeline from the user's perspective, typically simulating real usage flows.
 
 We prioritize **fast iteration** over 100% coverage for the hackathon MVP, but aim for good coverage of critical paths (episode lifecycle, alert routing).
 
@@ -105,57 +110,44 @@ async def test_create_episode():
         assert data["status"] == "active"
 ```
 
-## Manual Verification
+## Manual Tests
 
-For features that require physical hardware or complex user interactions:
+This section covers scenarios that cannot be automated: hardware-dependent behavior, visual verification, network-dependent flows.
 
 ### Watch App (HealthKit Integration)
-
-**Scenario A: HealthKit Data Streaming**
-1. Build and run on a physical Apple Watch
-2. Start a workout (e.g., Indoor Walk) to activate live HR streaming
-3. Verify heart rate updates appear in the app UI every ~5 seconds
-4. Check console logs for HKAnchoredObjectQuery updates
-
-**Scenario B: Episode Trigger**
-1. Temporarily lower HR threshold to 80 BPM in `HealthService.swift`
-2. Start a workout to elevate HR above threshold
-3. Verify episode starts and calming flow begins
-4. Confirm WebSocket message sent to relay (check relay logs)
+*   **Purpose:** Verify HealthKit data streaming and episode trigger logic.
+*   **Usage:** Build on physical watch, start Indoor Walk workout, and observe HR updates.
+*   **What It Tests:** HealthKit permission handling, HKAnchoredObjectQuery reliability, and threshold detection.
+*   **Expected Output:** HR updates every ~5s; episode starts when HR > threshold.
 
 ### Mobile App (Camera Check-In)
-
-**Scenario A: SmartSpectra SDK Integration**
-1. Grant camera permissions on physical iOS device
-2. Tap "Quick Check-In" in app
-3. Position face in front-facing camera guide
-4. Wait for SDK to analyze (10-15 seconds)
-5. Verify pulse, breathing rate, and mood are displayed
-
-**Scenario B: WebSocket Real-Time Alerts**
-1. Ensure relay server is running
-2. Connect watch app to relay
-3. Trigger episode from watch app
-4. Verify mobile app shows ring popup alert within 2 seconds
-5. Check that episode data matches watch-sent data
+*   **Purpose:** Validate SmartSpectra SDK integration for contactless vitals.
+*   **Usage:** Open "Quick Check-In" on physical iOS device and position face in guide.
+*   **What It Tests:** Camera permission hooks, SDK initialization, and ML analysis callback.
+*   **Expected Output:** Pulse, breathing rate, and mood displayed after 15s.
 
 ### Web Dashboard (3D Visualization)
+*   **Purpose:** Ensure 3D terrain heatmaps render correctly.
+*   **Usage:** Navigate to `/dashboard` and interact with the map.
+*   **What It Tests:** Three.js scene initialization, terrain mesh loading, and API data overlay.
+*   **Expected Output:** Smoothly interactive 3D map with accurate geographic heat markers.
 
-**Scenario A: 3D Terrain Rendering**
-1. Navigate to `/dashboard` in browser
-2. Wait for Three.js scene to load (3-5 seconds)
-3. Verify terrain mesh renders with heatmap overlay
-4. Test mouse/trackpad interaction (pan, zoom, rotate)
+## Writing New Tests
 
-**Scenario B: Real-Time Episode Feed**
-1. Start backend server
-2. Create test episodes via API or watch app
-3. Verify episodes appear in dashboard feed within 5 seconds
-4. Check that episode markers appear on 3D map at correct coordinates
+*   **Pattern:** Follow the Arrange / Act / Assert pattern.
+    ```typescript
+    // Arrange
+    const input = setupData();
+    // Act
+    const result = processData(input);
+    // Assert
+    expect(result).toEqual(expectedOutput);
+    ```
+*   **Isolation:** Tests must not share mutable state. Each test should set up and tear down its own environment (e.g., in-memory DB).
+*   **Mocking Requirements:** No live hardware or external APIs should be used in automated runs. Depend on mocks for ElevenLabs, Gemini, and HealthKit.
 
 ## Mocking Standards
-
-### External APIs
+External APIs should be mocked using [Library].
 
 Always mock external APIs (ElevenLabs, Gemini, SmartSpectra) in tests:
 
@@ -236,30 +228,22 @@ jobs:
       - run: cd apps/server && pip install -e ".[dev]" && pytest
 ```
 
-## Debugging Tests
-
-### Web/Mobile
-```bash
-# Run a single test file
-npx vitest path/to/test.test.ts
-
-# Run tests matching a pattern
-npx vitest -t "EpisodeCard"
-
-# Debug mode (Node inspector)
-node --inspect-brk node_modules/.bin/vitest
+pytest --pdb tests/test_episodes.py
 ```
 
-### Backend
-```bash
-# Run a single test file
-pytest tests/test_episodes.py -v
+## Troubleshooting Tests
 
-# Run a specific test
-pytest tests/test_episodes.py::test_create_episode -v
+### Environment & Dependency Issues
+**Issue:** `ImportError: cannot import name 'module'` after install.
+**Fix:** Verify your PYTHONPATH is set correctly and the test environment is activated.
 
-# Debug with pdb
-pytest --pdb tests/test_episodes.py
+### Runtime Errors
+**Issue:** `MagicMock object has no attribute 'expected_call'` during API mock.
+**Fix:** Check the method name on the mocked object matches the actual implementation.
+
+### Network & Config Issues
+**Issue:** Test suite passes individually but fails when run together.
+**Fix:** Ensure global state is reset in teardown methods and avoid shared fixtures unless explicitly read-only.
 ```
 
 ## Best Practices

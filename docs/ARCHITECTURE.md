@@ -4,12 +4,14 @@ This document details the architectural decisions, system components, and data f
 
 ## Glossary
 
-* **Episode:** A health anomaly detection event, triggered when vitals (heart rate, HRV) cross thresholds. Episodes go through stages: detection → calming → check-in → resolution.
-* **Zone:** A geographic area (neighborhood, building, campus) where community-wide safety events are aggregated.
-* **PulseNet:** Custom PyTorch anomaly detection model that analyzes individual and community-wide vital signs to detect correlated distress events.
-* **Relay Server:** Lightweight WebSocket bridge that translates watch events into mobile notification format for real-time family alerts.
+> **Note:** Define any domain-specific or non-obvious term used in the codebase here. Terms must be ordered alphabetically.
+
 * **Calming Agent:** AI-powered intervention (ElevenLabs conversational AI) that guides breathing exercises when distress is detected.
 * **Check-In:** Contactless vital sign measurement using the iPhone front camera via SmartSpectra SDK (pulse, breathing rate, facial expression).
+* **Episode:** A health anomaly detection event, triggered when vitals (heart rate, HRV) cross thresholds. Episodes go through stages: detection → calming → check-in → resolution.
+* **PulseNet:** Custom PyTorch anomaly detection model that analyzes individual and community-wide vital signs to detect correlated distress events.
+* **Relay Server:** Lightweight WebSocket bridge that translates watch events into mobile notification format for real-time family alerts.
+* **Zone:** A geographic area (neighborhood, building, campus) where community-wide safety events are aggregated.
 
 ## System Overview
 
@@ -109,25 +111,21 @@ sequenceDiagram
 
 ## Design Constraints & Trade-offs
 
-### Watch Simulator Limitation
-* **Constraint:** WatchConnectivity framework doesn't work between watch simulator (macOS) and physical phone (iOS).
-* **Solution:** Built a dedicated WebSocket relay server (~100 lines of Python) to bridge the two devices. This adds a network hop but enables rapid testing without needing a physical Apple Watch.
-
-### HealthKit Background Execution
-* **Constraint:** watchOS throttles background queries when battery is low or device is idle.
-* **Trade-off:** Prioritized real-time alerts during active usage over 24/7 background monitoring. Production version would use HealthKit background delivery + push notifications.
-
-### SQLite vs PostgreSQL
-* **Constraint:** SQLite doesn't support concurrent writes well, which could be an issue with high episode volume.
-* **Trade-off:** Acceptable for hackathon MVP (single-device testing). Migration to PostgreSQL is straightforward via SQLAlchemy ORM.
-
-### Model Checkpoints in Git
-* **Constraint:** Large PyTorch `.pt` files (50MB+) bloat Git history.
-* **Trade-off:** Checked them in for hackathon convenience. Production would use Git LFS or S3 bucket with versioned model artifacts.
-
-### Monorepo Without Heavy Tooling
-* **Constraint:** Didn't want Nx/Turborepo overhead for a 3-day hackathon.
-* **Trade-off:** Using npm workspaces + simple Makefile for task orchestration. Works well for small team but would need tooling for larger scale.
+* **Decision: WebSocket Relay Server**
+  * **Alternative Considered:** Apple WatchConnectivity Framework
+  * **Rationale:** WatchConnectivity doesn't work between the macOS watch simulator and a physical iOS device. The WebSocket relay enables testing without a physical Apple Watch.
+* **Decision: Prioritized Active Usage Alerts**
+  * **Alternative Considered:** 24/7 background HealthKit monitoring
+  * **Rationale:** watchOS throttles background queries to preserve battery. We prioritized reliable alerts during active usage for the MVP.
+* **Decision: SQLite for Initial Storage**
+  * **Alternative Considered:** PostgreSQL
+  * **Rationale:** SQLite is lightweight and requires zero configuration for a hackathon environment. Single-device testing does not require high concurrency support.
+* **Decision: Git-tracked Model Checkpoints**
+  * **Alternative Considered:** Git LFS or S3 Bucket
+  * **Rationale:** Checked in small checkpoints for developer convenience during rapid prototyping. Production would migrate to dedicated asset storage.
+* **Decision: npm Workspaces Monorepo**
+  * **Alternative Considered:** Nx or Turborepo
+  * **Rationale:** Avoided the complexity of dedicated monorepo tooling for a small project while maintaining clean separation between apps.
 
 ## Security Considerations
 

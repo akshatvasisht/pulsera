@@ -16,9 +16,23 @@
 
 ## Setup
 
-### Installation
+> **Note:** First-run execution may download models (PulseNet), caches, or dependencies before starting.
 
-**Clone and install dependencies:**
+### Automated Setup (Recommended)
+
+You can set up the entire environment automatically using the setup script:
+
+```bash
+git clone https://github.com/akshatvasisht/pulsera.git
+cd pulsera
+[command to run setup script, e.g., ./scripts/setup.sh]
+```
+
+### Manual Setup
+
+If you prefer manual setup, follow these steps:
+
+**1. Clone and install dependencies:**
 
 ```bash
 git clone https://github.com/akshatvasisht/pulsera.git
@@ -29,45 +43,36 @@ npm run install:all
 
 # Install Python backend dependencies
 cd apps/server
-python3 -m pip install -e ".[dev]"
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
 cd ../..
 ```
 
 ### Environment Variables
 
-Create `.env` files in the appropriate directories:
+Create `.env` files in the appropriate directories.
 
-#### Backend (apps/server/.env)
+#### Backend (`apps/server/.env`)
 
-```ini
-# Database
-DATABASE_URL=sqlite+aiosqlite:///./pulsera.db
+**Required Variables**
+* `DATABASE_URL`: The connection string for the database.
+* `ELEVENLABS_API_KEY`: API key for ElevenLabs conversational AI.
+* `GEMINI_API_KEY`: API key for Google Gemini health analysis.
+* `SMARTSPECTRA_API_KEY`: API key for contactless vital sign detection.
 
-# CORS Origins (comma-separated)
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:19006
+**Optional Variables**
+* `ALLOWED_ORIGINS`: Comma-separated list of permitted CORS origins. Default: `http://localhost:3000,http://localhost:19006`.
+* `PULSENET_CHECKPOINT_PATH`: Path to the custom PyTorch model checkpoint. Default: `checkpoints/pulsenet_v1.pt`.
+* `ENABLE_COMMUNITY_DETECTION`: Toggle for zone-wide anomaly aggregation. Default: `true`.
+* `DEBUG_MODE`: Enables detailed logging and debug endpoints. Default: `true`.
 
-# External APIs
-ELEVENLABS_API_KEY=your_elevenlabs_key_here
-GEMINI_API_KEY=your_google_gemini_key_here
-SMARTSPECTRA_API_KEY=your_smartspectra_key_here
+#### Mobile (`apps/mobile/.env`, optional)
 
-# Optional: Model checkpoint path
-PULSENET_CHECKPOINT_PATH=checkpoints/pulsenet_v1.pt
+**Required Variables**
+* `EXPO_PUBLIC_WS_URL`: WebSocket relay URL (e.g., `ws://<MAC_IP>:8765/ws`).
+* `EXPO_PUBLIC_API_URL`: Backend API URL (e.g., `http://<MAC_IP>:8000`).
 
-# Optional: Feature flags
-ENABLE_COMMUNITY_DETECTION=true
-DEBUG_MODE=true
-```
-
-#### Mobile (apps/mobile/.env, optional)
-
-```ini
-# WebSocket relay URL (replace <MAC_IP> with your local IP)
-EXPO_PUBLIC_WS_URL=ws://<MAC_IP>:8765/ws
-
-# Backend API URL
-EXPO_PUBLIC_API_URL=http://<MAC_IP>:8000
-```
 
 Find your Mac's IP address: `ipconfig getifaddr en0`
 
@@ -166,50 +171,45 @@ For production, use Gunicorn with Uvicorn workers:
 gunicorn src.server.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 ```
 
+## Logging
+
+* **Location:** Log files are stored in `apps/server/logs/` and `apps/relay/logs/`.
+* **Configuration:** Log level can be configured via the `DEBUG_MODE` environment variable in the backend.
+* **Real-time Tail:** View backend logs in real-time by running `tail -f apps/server/logs/server.log`.
+* **Rotation Policy:** Logs rotate daily, keeping the last 7 days of historical logs.
+
 ## Troubleshooting
 
-### Issue: `npm run install:all` fails with workspace errors
+### Environment & Dependency Issues
 
-**Fix:** Ensure you're using npm 7+ (workspaces support). Update npm:
+**Issue:** `npm run install:all` fails with workspace errors
+**Fix:** Ensure you're using npm 7+ (workspaces support). Update npm: `npm install -g npm@latest`
 
+**Issue:** Python backend import errors or missing `pip`
+**Fix:** On Debian/Ubuntu, `pip` may be missing from the system Python. Use a virtual environment:
 ```bash
-npm install -g npm@latest
+cd apps/server
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
 ```
+Verify Python version is 3.11+.
 
-### Issue: Mobile app can't connect to backend or relay
+### Runtime Errors
 
-**Fix:**
-1. Verify backend and relay are running
-2. Check that `EXPO_PUBLIC_WS_URL` and `EXPO_PUBLIC_API_URL` in `apps/mobile/.env` use your Mac's IP (not localhost)
-3. Ensure Mac firewall allows connections on ports 8765 and 8000
+**Issue:** HealthKit data not streaming on watch
+**Fix:** HealthKit only works on physical devices, not simulators. Grant permissions in watchOS Settings → Privacy.
 
-### Issue: Xcode build fails for watch app
+**Issue:** ElevenLabs AI agent doesn't respond
+**Fix:** Verify `ELEVENLABS_API_KEY` is set in `apps/server/.env`. Check internet connection.
 
-**Fix:**
-1. Clean build folder: **Cmd+Shift+K**
-2. Update Xcode to latest version
-3. Ensure macOS and Xcode are compatible with watchOS 10+ SDK
+### Network & Config Issues
 
-### Issue: Python backend import errors
+**Issue:** Mobile app can't connect to backend or relay
+**Fix:** Verify backend and relay are running. Check that `EXPO_PUBLIC_WS_URL` and `EXPO_PUBLIC_API_URL` use your Mac's IP.
 
-**Fix:**
-1. Ensure you installed with editable mode: `pip install -e ".[dev]"`
-2. Activate virtual environment if using one
-3. Verify Python version is 3.11+: `python3 --version`
-
-### Issue: HealthKit data not streaming on watch
-
-**Fix:**
-1. HealthKit only works on physical devices, not simulators (simulators show mock data)
-2. Grant HealthKit permissions in watchOS Settings → Privacy
-3. Restart the watch app
-
-### Issue: ElevenLabs AI agent doesn't respond
-
-**Fix:**
-1. Verify `ELEVENLABS_API_KEY` is set in `apps/server/.env`
-2. Check internet connection (AI agent requires network)
-3. Review backend logs for WebSocket errors
+**Issue:** Xcode build fails for watch app
+**Fix:** Clean build folder (Cmd+Shift+K). Update Xcode to latest version and ensure watchOS 10+ SDK compatibility.
 
 ## Next Steps
 

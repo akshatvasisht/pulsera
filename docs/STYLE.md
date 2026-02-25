@@ -4,10 +4,26 @@ This document defines the coding principles, language-specific guidelines, and c
 
 ## General Principles
 
-* **Professionalism:** Code and documentation should be clear, objective, and maintainable. Avoid slang, memes, or overly casual language in production code.
-* **Intent over Implementation:** Comments should explain *why* a decision was made, not *what* the code is doing (unless the implementation is inherently complex). Code should be self-documenting through clear naming.
-* **Consistency:** Follow established patterns within each codebase. If a pattern exists, use it. If introducing a new pattern, document it.
-* **Testability:** Write code that is easy to test. Prefer pure functions, dependency injection, and separation of concerns.
+### Professionalism & Tone
+* All comments and documentation must use objective, technical language.
+* Avoid informal language or environment-specific justifications.
+* **Correct:** "Defaults to CPU inference for wider hardware compatibility."
+* **Incorrect:** "Running on my laptop so GPU wasn't available."
+
+### Intent over Implementation
+* Comments must explain *why* a decision was made, not narrate *what* the code does.
+* The code itself should be self-explanatory for the *what*.
+
+### No Meta-Commentary
+* Forbid internal debate traces, failed attempt logs, or editing notes in committed code.
+* **Correct:** `// Uses Y to ensure thread safety under concurrent load`
+* **Incorrect:** `// I tried using X but it kept breaking so I switched to Y`
+
+### Consistency
+* Follow established patterns within each codebase. If a pattern exists, use it. If introducing a new pattern, document it.
+
+### Testability
+* Write code that is easy to test. Prefer pure functions, dependency injection, and separation of concerns.
 
 ## Language Guidelines
 
@@ -187,15 +203,15 @@ class EpisodeViewModel: ObservableObject {
 ## Git Workflow
 
 ### Branching Strategy
-* **Main branch:** Always stable, production-ready code
-* **Feature branches:** Named `feature/description` (e.g., `feature/episode-calming`)
-* **Bug fixes:** Named `fix/description` (e.g., `fix/websocket-reconnect`)
-* **Hotfixes:** Named `hotfix/description` for urgent production fixes
+* **Main branch:** Always stable, production-ready code.
+* **Feature branches:** Named `feature/description` (e.g., `feature/episode-calming`).
+* **Bug fixes:** Named `fix/description` (e.g., `fix/websocket-reconnect`).
+* **Chores:** Named `chore/description` for routine tasks.
 
 ### Commit Messages
-* **Use imperative mood:** "Add feature" not "Added feature" or "Adds feature"
-* **Capitalize first letter:** "Fix bug" not "fix bug"
-* **No period at end:** "Add test" not "Add test."
+* **Style:** Messages must use imperative mood, present tense, and be under 72 characters for the subject line.
+* **Atomic Commits:** Commits must be atomic (one logical change per commit).
+* **Format:** Capitalize first letter and no period at the end.
 * **Reference issues:** Include issue number if applicable (e.g., "Fix #123: ...")
 
 ```
@@ -208,15 +224,19 @@ Good commit messages:
 Bad commit messages:
 - fixed stuff
 - WIP
-- asdfasdf
-- Updated files
 ```
 
 ### Pull Requests
-* **Small, focused PRs:** Aim for < 400 lines changed per PR
-* **Descriptive titles:** Explain *what* and *why*, not *how*
-* **Link issues:** Reference related issues in PR description
-* **Self-review:** Review your own changes before requesting review from others
+* **Description:** PRs must include a description of what changed and why.
+* **Small, focused PRs:** Aim for < 400 lines changed per PR.
+* **Descriptive titles:** Explain *what* and *why*, not *how*.
+* **Link issues:** Reference related issues in PR description.
+* **Self-review:** Review your own changes before requesting review from others.
+
+## Code Comments
+* Trivial logic must not be commented.
+* Complex logic, non-obvious decisions, and "gotchas" must be commented.
+* Commented-out code must not be committed unless accompanied by a TODO with a ticket/issue reference.
 
 ## Code Review Guidelines
 

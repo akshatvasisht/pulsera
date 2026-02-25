@@ -10,7 +10,7 @@
     "lint:all": "npm run lint --workspace web && npm run lint --workspace pulsera-mobile",
     "dev:web": "npm run dev --workspace web",
     "dev:mobile": "npm run start --workspace pulsera-mobile",
-    "dev:server": "cd apps/server && uvicorn src.server.main:app --reload --port 8000",
+    "dev:server": "cd apps/server && ./.venv/bin/uvicorn src.server.main:app --reload --port 8000",
     "lint:server": "cd apps/server && make lint",
     "test:server": "cd apps/server && make test",
     "check:types:server": "cd apps/server && make check-types",
@@ -22,4 +22,3 @@
     "shadcn": "^3.8.4"
   }
 }
-
