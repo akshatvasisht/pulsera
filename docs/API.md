@@ -19,9 +19,11 @@ Authorization: Bearer <token>
 ### Episodes
 
 #### `POST /episodes/start`
+
 **Description:** Start a new health episode when vitals anomaly is detected.
 
 **Request Body:**
+
 ```json
 {
   "user_id": "string",
@@ -35,6 +37,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "episode_id": "uuid",
@@ -44,9 +47,11 @@ Authorization: Bearer <token>
 ```
 
 #### `PUT /episodes/{episode_id}/resolve`
+
 **Description:** Mark an episode as resolved after intervention completes.
 
 **Request Body:**
+
 ```json
 {
   "resolution_type": "calming_successful",
@@ -59,6 +64,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "episode_id": "uuid",
@@ -68,13 +74,16 @@ Authorization: Bearer <token>
 ```
 
 #### `GET /episodes/user/{user_id}`
+
 **Description:** Retrieve episode history for a user.
 
 **Query Parameters:**
+
 - `limit` (int, optional): Number of episodes to return (default: 20)
 - `status` (string, optional): Filter by status (active, resolved, escalated)
 
 **Response:**
+
 ```json
 {
   "episodes": [
@@ -93,9 +102,11 @@ Authorization: Bearer <token>
 ### Groups
 
 #### `POST /groups`
+
 **Description:** Create a new family group.
 
 **Request Body:**
+
 ```json
 {
   "name": "Family Group",
@@ -104,6 +115,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "group_id": "uuid",
@@ -113,9 +125,11 @@ Authorization: Bearer <token>
 ```
 
 #### `POST /groups/{group_id}/members`
+
 **Description:** Add a member to a group.
 
 **Request Body:**
+
 ```json
 {
   "user_id": "uuid",
@@ -124,9 +138,11 @@ Authorization: Bearer <token>
 ```
 
 #### `GET /groups/{group_id}`
+
 **Description:** Get group details including members.
 
 **Response:**
+
 ```json
 {
   "group_id": "uuid",
@@ -145,9 +161,11 @@ Authorization: Bearer <token>
 ### Alerts
 
 #### `POST /alerts`
+
 **Description:** Create an alert for episode escalation.
 
 **Request Body:**
+
 ```json
 {
   "episode_id": "uuid",
@@ -158,6 +176,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "alert_id": "uuid",
@@ -169,9 +188,11 @@ Authorization: Bearer <token>
 ### Health Data
 
 #### `POST /health_data/ingest`
+
 **Description:** Ingest bulk health data from wearables or phone sensors.
 
 **Request Body:**
+
 ```json
 {
   "user_id": "uuid",
@@ -188,9 +209,11 @@ Authorization: Bearer <token>
 ### Community & Zones
 
 #### `GET /community/zones/{zone_id}/status`
+
 **Description:** Get aggregated safety status for a geographic zone.
 
 **Response:**
+
 ```json
 {
   "zone_id": "uuid",
@@ -208,6 +231,7 @@ Authorization: Bearer <token>
 **Endpoint:** `ws://localhost:8765/ws`
 
 #### Event: `episodestart`
+
 Sent when watch detects anomaly and starts an episode.
 
 ```json
@@ -220,6 +244,7 @@ Sent when watch detects anomaly and starts an episode.
 ```
 
 #### Event: `pulse-checkin`
+
 Sent when wearer completes contactless check-in on phone.
 
 ```json
@@ -239,14 +264,14 @@ Sent when wearer completes contactless check-in on phone.
 
 ### HTTP Status Codes
 
-| Code | Meaning |
-|------|---------|
-| 200  | Success |
-| 201  | Created |
-| 400  | Bad Request (validation error) |
+| Code | Meaning                             |
+| ---- | ----------------------------------- |
+| 200  | Success                             |
+| 201  | Created                             |
+| 400  | Bad Request (validation error)      |
 | 401  | Unauthorized (invalid/missing auth) |
-| 404  | Not Found |
-| 500  | Internal Server Error |
+| 404  | Not Found                           |
+| 500  | Internal Server Error               |
 
 ### Error Response Format
 
@@ -266,6 +291,7 @@ Sent when wearer completes contactless check-in on phone.
 ## Rate Limiting
 
 Currently no rate limiting implemented. Production deployment should add:
+
 - 100 requests/minute per IP for general endpoints
 - 1000 requests/minute for health data ingestion
 - No limit on WebSocket messages (connection-based throttling instead)

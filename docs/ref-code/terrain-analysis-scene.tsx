@@ -1,18 +1,14 @@
-'use client';
+'use client'
 
-import { useRef, useMemo, useEffect, useState, useCallback } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { cn } from '@/lib/utils';
-import {
-  OrbitControls,
-  PerspectiveCamera,
-  Html
-} from '@react-three/drei';
-import * as THREE from 'three';
-import { motion, AnimatePresence } from 'framer-motion';
-import { parse as parsePartialJson } from 'partial-json';
-import type { AnalysisPhase } from '@/components/agent';
-import { PolygonCoordinates } from '@/components/map';
+import { useRef, useMemo, useEffect, useState, useCallback } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { cn } from '@/lib/utils'
+import { OrbitControls, PerspectiveCamera, Html } from '@react-three/drei'
+import * as THREE from 'three'
+import { motion, AnimatePresence } from 'framer-motion'
+import { parse as parsePartialJson } from 'partial-json'
+import type { AnalysisPhase } from '@/components/agent'
+import { PolygonCoordinates } from '@/components/map'
 import {
   calculateCentroid,
   fetchElevationGrid,
@@ -21,29 +17,29 @@ import {
   calculateSolarSuitability,
   calculateWindSuitability,
   calculateBounds,
-} from '@/lib/geo';
-import { usePlanStore } from '@/stores/plan-store';
+} from '@/lib/geo'
+import { usePlanStore } from '@/stores/plan-store'
 
-const TERRAIN_RESOLUTION = 128;
-const TERRAIN_SIZE = 10;
-const TERRAIN_HALF = TERRAIN_SIZE / 2;
-const TERRAIN_BASE_Y = -0.5;
-const TERRAIN_ELEVATION_SCALE = 0.8;
-const PLACEMENT_BOUND = TERRAIN_HALF * 0.90;
+const TERRAIN_RESOLUTION = 128
+const TERRAIN_SIZE = 10
+const TERRAIN_HALF = TERRAIN_SIZE / 2
+const TERRAIN_BASE_Y = -0.5
+const TERRAIN_ELEVATION_SCALE = 0.8
+const PLACEMENT_BOUND = TERRAIN_HALF * 0.9
 
-type NormalizedPolygon = Array<{ x: number; z: number }>;
+type NormalizedPolygon = Array<{ x: number; z: number }>
 
 type PolygonBounds = {
-  minX: number;
-  maxX: number;
-  minZ: number;
-  maxZ: number;
-  centerX: number;
-  centerZ: number;
-  width: number;
-  height: number;
-  normalizedPolygon: NormalizedPolygon | null;
-};
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
+  centerX: number
+  centerZ: number
+  width: number
+  height: number
+  normalizedPolygon: NormalizedPolygon | null
+}
 
 function getPolygonBounds(polygon: PolygonCoordinates[] | null | undefined): PolygonBounds {
   if (!polygon || polygon.length < 3) {
@@ -58,18 +54,18 @@ function getPolygonBounds(polygon: PolygonCoordinates[] | null | undefined): Pol
       width: PLACEMENT_BOUND * 2,
       height: PLACEMENT_BOUND * 2,
       normalizedPolygon: null,
-    };
+    }
   }
 
-  const { normalized, scaleX, scaleZ } = normalizePolygonTo3D(polygon);
+  const { normalized, scaleX, scaleZ } = normalizePolygonTo3D(polygon)
 
-  const xs = normalized.map(p => p.x);
-  const zs = normalized.map(p => p.z);
+  const xs = normalized.map((p) => p.x)
+  const zs = normalized.map((p) => p.z)
 
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minZ = Math.min(...zs);
-  const maxZ = Math.max(...zs);
+  const minX = Math.min(...xs)
+  const maxX = Math.max(...xs)
+  const minZ = Math.min(...zs)
+  const maxZ = Math.max(...zs)
 
   return {
     minX,
@@ -81,23 +77,23 @@ function getPolygonBounds(polygon: PolygonCoordinates[] | null | undefined): Pol
     width: maxX - minX,
     height: maxZ - minZ,
     normalizedPolygon: normalized,
-  };
+  }
 }
 
 // Map normalized [-1,1] coordinate to polygon bounds with margin
 function toPolygonCoord(value: number, min: number, max: number, margin: number = 0.15): number {
-  const clamped = clampNumber(value, -1, 1);
-  const range = max - min;
-  const marginedMin = min + range * margin;
-  const marginedMax = max - range * margin;
-  return marginedMin + ((clamped + 1) / 2) * (marginedMax - marginedMin);
+  const clamped = clampNumber(value, -1, 1)
+  const range = max - min
+  const marginedMin = min + range * margin
+  const marginedMax = max - range * margin
+  return marginedMin + ((clamped + 1) / 2) * (marginedMax - marginedMin)
 }
 
 function normalizePolygonTo3D(polygon: PolygonCoordinates[]): {
-  normalized: NormalizedPolygon;
-  bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number };
-  scaleX: number;
-  scaleZ: number;
+  normalized: NormalizedPolygon
+  bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number }
+  scaleX: number
+  scaleZ: number
 } {
   if (!polygon || polygon.length < 3) {
     return {
@@ -110,70 +106,74 @@ function normalizePolygonTo3D(polygon: PolygonCoordinates[]): {
       bounds: { minLat: 0, maxLat: 1, minLng: 0, maxLng: 1 },
       scaleX: TERRAIN_SIZE,
       scaleZ: TERRAIN_SIZE,
-    };
+    }
   }
 
-  const minLat = Math.min(...polygon.map(p => p.lat));
-  const maxLat = Math.max(...polygon.map(p => p.lat));
-  const minLng = Math.min(...polygon.map(p => p.lng));
-  const maxLng = Math.max(...polygon.map(p => p.lng));
+  const minLat = Math.min(...polygon.map((p) => p.lat))
+  const maxLat = Math.max(...polygon.map((p) => p.lat))
+  const minLng = Math.min(...polygon.map((p) => p.lng))
+  const maxLng = Math.max(...polygon.map((p) => p.lng))
 
-  const latRange = maxLat - minLat || 0.0001;
-  const lngRange = maxLng - minLng || 0.0001;
-  const aspectRatio = lngRange / latRange;
+  const latRange = maxLat - minLat || 0.0001
+  const lngRange = maxLng - minLng || 0.0001
+  const aspectRatio = lngRange / latRange
 
-  const scaleX = aspectRatio >= 1 ? TERRAIN_SIZE : TERRAIN_SIZE * aspectRatio;
-  const scaleZ = aspectRatio >= 1 ? TERRAIN_SIZE / aspectRatio : TERRAIN_SIZE;
+  const scaleX = aspectRatio >= 1 ? TERRAIN_SIZE : TERRAIN_SIZE * aspectRatio
+  const scaleZ = aspectRatio >= 1 ? TERRAIN_SIZE / aspectRatio : TERRAIN_SIZE
 
-  const normalized = polygon.map(p => ({
+  const normalized = polygon.map((p) => ({
     x: ((p.lng - minLng) / lngRange - 0.5) * scaleX,
     z: -((p.lat - minLat) / latRange - 0.5) * scaleZ,
-  }));
+  }))
 
-  return { normalized, bounds: { minLat, maxLat, minLng, maxLng }, scaleX, scaleZ };
+  return { normalized, bounds: { minLat, maxLat, minLng, maxLng }, scaleX, scaleZ }
 }
 
 function isPointInPolygon(x: number, y: number, polygon: NormalizedPolygon): boolean {
-  let inside = false;
-  const n = polygon.length;
+  let inside = false
+  const n = polygon.length
 
   for (let i = 0, j = n - 1; i < n; j = i++) {
-    const xi = polygon[i].x, yi = polygon[i].z;
-    const xj = polygon[j].x, yj = polygon[j].z;
+    const xi = polygon[i].x,
+      yi = polygon[i].z
+    const xj = polygon[j].x,
+      yj = polygon[j].z
 
-    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
-      inside = !inside;
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+      inside = !inside
     }
   }
 
-  return inside;
+  return inside
 }
 
 function distanceToPolygonEdge(x: number, y: number, polygon: NormalizedPolygon): number {
-  let minDist = Infinity;
-  const n = polygon.length;
+  let minDist = Infinity
+  const n = polygon.length
 
   for (let i = 0, j = n - 1; i < n; j = i++) {
-    const x1 = polygon[i].x, y1 = polygon[i].z;
-    const x2 = polygon[j].x, y2 = polygon[j].z;
+    const x1 = polygon[i].x,
+      y1 = polygon[i].z
+    const x2 = polygon[j].x,
+      y2 = polygon[j].z
 
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const len2 = dx * dx + dy * dy;
+    const dx = x2 - x1
+    const dy = y2 - y1
+    const len2 = dx * dx + dy * dy
 
-    let t = 0;
+    let t = 0
     if (len2 > 0) {
-      t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / len2));
+      t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / len2))
     }
 
-    const projX = x1 + t * dx;
-    const projY = y1 + t * dy;
-    const dist = Math.sqrt((x - projX) * (x - projX) + (y - projY) * (y - projY));
+    const projX = x1 + t * dx
+    const projY = y1 + t * dy
+    const dist = Math.sqrt((x - projX) * (x - projX) + (y - projY) * (y - projY))
 
-    minDist = Math.min(minDist, dist);
+    minDist = Math.min(minDist, dist)
   }
 
-  return minDist;
+  return minDist
 }
 
 function createPolygonTerrainGeometry(
@@ -181,47 +181,47 @@ function createPolygonTerrainGeometry(
   terrainData: Float32Array,
   resolution: number,
   scaleX: number,
-  scaleZ: number
+  scaleZ: number,
 ): THREE.BufferGeometry {
-  const geo = new THREE.PlaneGeometry(scaleX, scaleZ, resolution - 1, resolution - 1);
-  const positions = geo.attributes.position.array as Float32Array;
-  const uvs = geo.attributes.uv.array as Float32Array;
+  const geo = new THREE.PlaneGeometry(scaleX, scaleZ, resolution - 1, resolution - 1)
+  const positions = geo.attributes.position.array as Float32Array
+  const uvs = geo.attributes.uv.array as Float32Array
 
-  const alphas = new Float32Array(positions.length / 3);
-  const edgeDistances = new Float32Array(positions.length / 3);
+  const alphas = new Float32Array(positions.length / 3)
+  const edgeDistances = new Float32Array(positions.length / 3)
 
   for (let i = 0; i < positions.length / 3; i++) {
-    const x = positions[i * 3];
-    const y = positions[i * 3 + 1];
+    const x = positions[i * 3]
+    const y = positions[i * 3 + 1]
 
-    const u = uvs[i * 2];
-    const v = uvs[i * 2 + 1];
+    const u = uvs[i * 2]
+    const v = uvs[i * 2 + 1]
 
-    const gx = Math.floor(u * (resolution - 1));
-    const gy = Math.floor((1 - v) * (resolution - 1));
-    const clampedGx = Math.max(0, Math.min(resolution - 1, gx));
-    const clampedGy = Math.max(0, Math.min(resolution - 1, gy));
-    const elevation = terrainData[clampedGy * resolution + clampedGx] || 0;
+    const gx = Math.floor(u * (resolution - 1))
+    const gy = Math.floor((1 - v) * (resolution - 1))
+    const clampedGx = Math.max(0, Math.min(resolution - 1, gx))
+    const clampedGy = Math.max(0, Math.min(resolution - 1, gy))
+    const elevation = terrainData[clampedGy * resolution + clampedGx] || 0
 
-    positions[i * 3 + 2] = elevation * TERRAIN_ELEVATION_SCALE;
+    positions[i * 3 + 2] = elevation * TERRAIN_ELEVATION_SCALE
 
-    const worldZ = -y;
-    const inPolygon = isPointInPolygon(x, worldZ, normalizedPolygon);
-    const edgeDist = distanceToPolygonEdge(x, worldZ, normalizedPolygon);
-    const signedDist = inPolygon ? edgeDist : -edgeDist;
+    const worldZ = -y
+    const inPolygon = isPointInPolygon(x, worldZ, normalizedPolygon)
+    const edgeDist = distanceToPolygonEdge(x, worldZ, normalizedPolygon)
+    const signedDist = inPolygon ? edgeDist : -edgeDist
 
-    edgeDistances[i] = signedDist;
-    alphas[i] = 1.0;
+    edgeDistances[i] = signedDist
+    alphas[i] = 1.0
   }
 
-  geo.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
-  geo.setAttribute('edgeDist', new THREE.BufferAttribute(edgeDistances, 1));
-  geo.computeVertexNormals();
+  geo.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1))
+  geo.setAttribute('edgeDist', new THREE.BufferAttribute(edgeDistances, 1))
+  geo.computeVertexNormals()
 
-  return geo;
+  return geo
 }
 
-const CROSS_SECTION_DEPTH = 1.5;
+const CROSS_SECTION_DEPTH = 1.5
 
 function sampleTerrainHeightAt(
   terrainData: Float32Array,
@@ -229,36 +229,36 @@ function sampleTerrainHeightAt(
   x: number,
   z: number,
   scaleX: number,
-  scaleZ: number
+  scaleZ: number,
 ): number {
-  const u = (x / scaleX + 0.5);
-  const v = (-z / scaleZ + 0.5);
+  const u = x / scaleX + 0.5
+  const v = -z / scaleZ + 0.5
 
-  const gx = u * (resolution - 1);
-  const gy = (1 - v) * (resolution - 1);
+  const gx = u * (resolution - 1)
+  const gy = (1 - v) * (resolution - 1)
 
-  const x0 = Math.floor(gx);
-  const y0 = Math.floor(gy);
-  const x1 = Math.min(x0 + 1, resolution - 1);
-  const y1 = Math.min(y0 + 1, resolution - 1);
+  const x0 = Math.floor(gx)
+  const y0 = Math.floor(gy)
+  const x1 = Math.min(x0 + 1, resolution - 1)
+  const y1 = Math.min(y0 + 1, resolution - 1)
 
-  const tx = gx - x0;
-  const ty = gy - y0;
+  const tx = gx - x0
+  const ty = gy - y0
 
-  const clampX0 = Math.max(0, Math.min(resolution - 1, x0));
-  const clampY0 = Math.max(0, Math.min(resolution - 1, y0));
-  const clampX1 = Math.max(0, Math.min(resolution - 1, x1));
-  const clampY1 = Math.max(0, Math.min(resolution - 1, y1));
+  const clampX0 = Math.max(0, Math.min(resolution - 1, x0))
+  const clampY0 = Math.max(0, Math.min(resolution - 1, y0))
+  const clampX1 = Math.max(0, Math.min(resolution - 1, x1))
+  const clampY1 = Math.max(0, Math.min(resolution - 1, y1))
 
-  const h00 = terrainData[clampY0 * resolution + clampX0] || 0;
-  const h10 = terrainData[clampY0 * resolution + clampX1] || 0;
-  const h01 = terrainData[clampY1 * resolution + clampX0] || 0;
-  const h11 = terrainData[clampY1 * resolution + clampX1] || 0;
+  const h00 = terrainData[clampY0 * resolution + clampX0] || 0
+  const h10 = terrainData[clampY0 * resolution + clampX1] || 0
+  const h01 = terrainData[clampY1 * resolution + clampX0] || 0
+  const h11 = terrainData[clampY1 * resolution + clampX1] || 0
 
-  const hx0 = h00 + (h10 - h00) * tx;
-  const hx1 = h01 + (h11 - h01) * tx;
+  const hx0 = h00 + (h10 - h00) * tx
+  const hx1 = h01 + (h11 - h01) * tx
 
-  return hx0 + (hx1 - hx0) * ty;
+  return hx0 + (hx1 - hx0) * ty
 }
 
 function TerrainCrossSection({
@@ -267,82 +267,76 @@ function TerrainCrossSection({
   resolution,
   revealProgress,
 }: {
-  polygon: PolygonCoordinates[] | null | undefined;
-  terrainData: Float32Array;
-  resolution: number;
-  revealProgress: number;
+  polygon: PolygonCoordinates[] | null | undefined
+  terrainData: Float32Array
+  resolution: number
+  revealProgress: number
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const meshRef = useRef<THREE.Mesh>(null)
+  const materialRef = useRef<THREE.ShaderMaterial>(null)
 
   const { geometry, scaleX, scaleZ } = useMemo(() => {
     if (!polygon || polygon.length < 3) {
-      return { geometry: null, scaleX: TERRAIN_SIZE, scaleZ: TERRAIN_SIZE };
+      return { geometry: null, scaleX: TERRAIN_SIZE, scaleZ: TERRAIN_SIZE }
     }
 
-    const { normalized, scaleX, scaleZ } = normalizePolygonTo3D(polygon);
-    const segmentsPerEdge = 48;
+    const { normalized, scaleX, scaleZ } = normalizePolygonTo3D(polygon)
+    const segmentsPerEdge = 48
 
-    const vertices: number[] = [];
-    const uvs: number[] = [];
-    const baseElevations: number[] = [];
-    const indices: number[] = [];
+    const vertices: number[] = []
+    const uvs: number[] = []
+    const baseElevations: number[] = []
+    const indices: number[] = []
 
-    let vertexIndex = 0;
+    let vertexIndex = 0
 
     for (let i = 0; i < normalized.length; i++) {
-      const p1 = normalized[i];
-      const p2 = normalized[(i + 1) % normalized.length];
+      const p1 = normalized[i]
+      const p2 = normalized[(i + 1) % normalized.length]
 
       for (let j = 0; j < segmentsPerEdge; j++) {
-        const t1 = j / segmentsPerEdge;
-        const t2 = (j + 1) / segmentsPerEdge;
+        const t1 = j / segmentsPerEdge
+        const t2 = (j + 1) / segmentsPerEdge
 
-        const x1 = p1.x + (p2.x - p1.x) * t1;
-        const z1 = p1.z + (p2.z - p1.z) * t1;
-        const x2 = p1.x + (p2.x - p1.x) * t2;
-        const z2 = p1.z + (p2.z - p1.z) * t2;
+        const x1 = p1.x + (p2.x - p1.x) * t1
+        const z1 = p1.z + (p2.z - p1.z) * t1
+        const x2 = p1.x + (p2.x - p1.x) * t2
+        const z2 = p1.z + (p2.z - p1.z) * t2
 
-        const elev1 = sampleTerrainHeightAt(terrainData, resolution, x1, z1, scaleX, scaleZ);
-        const elev2 = sampleTerrainHeightAt(terrainData, resolution, x2, z2, scaleX, scaleZ);
+        const elev1 = sampleTerrainHeightAt(terrainData, resolution, x1, z1, scaleX, scaleZ)
+        const elev2 = sampleTerrainHeightAt(terrainData, resolution, x2, z2, scaleX, scaleZ)
 
-        const uCoord1 = (i + t1) / normalized.length;
-        const uCoord2 = (i + t2) / normalized.length;
+        const uCoord1 = (i + t1) / normalized.length
+        const uCoord2 = (i + t2) / normalized.length
 
-        vertices.push(
-          x1, elev1, z1,
-          x2, elev2, z2,
-          x1, 0, z1,
-          x2, 0, z2
-        );
+        vertices.push(x1, elev1, z1, x2, elev2, z2, x1, 0, z1, x2, 0, z2)
 
-        baseElevations.push(elev1, elev2, elev1, elev2);
+        baseElevations.push(elev1, elev2, elev1, elev2)
 
-        uvs.push(
-          uCoord1, 1.0,
-          uCoord2, 1.0,
-          uCoord1, 0.0,
-          uCoord2, 0.0
-        );
+        uvs.push(uCoord1, 1.0, uCoord2, 1.0, uCoord1, 0.0, uCoord2, 0.0)
 
         indices.push(
-          vertexIndex, vertexIndex + 2, vertexIndex + 1,
-          vertexIndex + 1, vertexIndex + 2, vertexIndex + 3
-        );
+          vertexIndex,
+          vertexIndex + 2,
+          vertexIndex + 1,
+          vertexIndex + 1,
+          vertexIndex + 2,
+          vertexIndex + 3,
+        )
 
-        vertexIndex += 4;
+        vertexIndex += 4
       }
     }
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-    geo.setAttribute('baseElev', new THREE.Float32BufferAttribute(baseElevations, 1));
-    geo.setIndex(indices);
-    geo.computeVertexNormals();
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+    geo.setAttribute('baseElev', new THREE.Float32BufferAttribute(baseElevations, 1))
+    geo.setIndex(indices)
+    geo.computeVertexNormals()
 
-    return { geometry: geo, scaleX, scaleZ };
-  }, [polygon, terrainData, resolution]);
+    return { geometry: geo, scaleX, scaleZ }
+  }, [polygon, terrainData, resolution])
 
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
@@ -465,71 +459,69 @@ function TerrainCrossSection({
       `,
       transparent: true,
       side: THREE.DoubleSide,
-    });
-  }, []);
+    })
+  }, [])
 
   useFrame((state) => {
     if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
-      materialRef.current.uniforms.uRevealProgress.value = revealProgress;
+      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime
+      materialRef.current.uniforms.uRevealProgress.value = revealProgress
 
-      const targetScale = Math.min(revealProgress * 2, 1);
+      const targetScale = Math.min(revealProgress * 2, 1)
       materialRef.current.uniforms.uElevationScale.value = THREE.MathUtils.lerp(
         materialRef.current.uniforms.uElevationScale.value,
         targetScale,
-        0.05
-      );
+        0.05,
+      )
     }
-  });
+  })
 
-  if (!geometry) return null;
+  if (!geometry) return null
 
   return (
     <mesh ref={meshRef} geometry={geometry}>
       <primitive object={shaderMaterial} ref={materialRef} attach="material" />
     </mesh>
-  );
+  )
 }
 
-
-
 type PlacementZone = {
-  x1: number;
-  z1: number;
-  x2: number;
-  z2: number;
-  suitability: number;
-  type: 'solar' | 'wind' | 'battery_storage' | 'agrivoltaic' | 'pollinator_habitat' | 'buffer';
-  id?: string;
-  name?: string;
-  estimatedCapacityMW?: number;
-  notes?: string;
-};
+  x1: number
+  z1: number
+  x2: number
+  z2: number
+  suitability: number
+  type: 'solar' | 'wind' | 'battery_storage' | 'agrivoltaic' | 'pollinator_habitat' | 'buffer'
+  id?: string
+  name?: string
+  estimatedCapacityMW?: number
+  notes?: string
+}
 
 type PlacementPlan = {
-  zones: PlacementZone[];
-};
+  zones: PlacementZone[]
+}
 
 function validateZone(zone: PlacementZone): boolean {
-  const MIN_ZONE_SIZE = 0.05;
-  const COORD_MIN = -1.5;
-  const COORD_MAX = 1.5;
+  const MIN_ZONE_SIZE = 0.05
+  const COORD_MIN = -1.5
+  const COORD_MAX = 1.5
 
-  if (zone.x1 < COORD_MIN || zone.x1 > COORD_MAX) return false;
-  if (zone.x2 < COORD_MIN || zone.x2 > COORD_MAX) return false;
-  if (zone.z1 < COORD_MIN || zone.z1 > COORD_MAX) return false;
-  if (zone.z2 < COORD_MIN || zone.z2 > COORD_MAX) return false;
+  if (zone.x1 < COORD_MIN || zone.x1 > COORD_MAX) return false
+  if (zone.x2 < COORD_MIN || zone.x2 > COORD_MAX) return false
+  if (zone.z1 < COORD_MIN || zone.z1 > COORD_MAX) return false
+  if (zone.z2 < COORD_MIN || zone.z2 > COORD_MAX) return false
 
-  if (zone.x2 <= zone.x1) return false;
-  if (zone.z2 <= zone.z1) return false;
+  if (zone.x2 <= zone.x1) return false
+  if (zone.z2 <= zone.z1) return false
 
-  const width = zone.x2 - zone.x1;
-  const height = zone.z2 - zone.z1;
+  const width = zone.x2 - zone.x1
+  const height = zone.z2 - zone.z1
   if (width < MIN_ZONE_SIZE || height < MIN_ZONE_SIZE) {
-    return false;
+    return false
   }
 
-  return true;
+  return true
 }
 
 const ZONE_COLORS: Record<PlacementZone['type'], string> = {
@@ -539,7 +531,7 @@ const ZONE_COLORS: Record<PlacementZone['type'], string> = {
   agrivoltaic: '#10b981',
   pollinator_habitat: '#ec4899',
   buffer: '#6b7280',
-};
+}
 
 const ZONE_ICONS: Record<PlacementZone['type'], string> = {
   solar: '\u2600',
@@ -548,7 +540,7 @@ const ZONE_ICONS: Record<PlacementZone['type'], string> = {
   agrivoltaic: '\u2618',
   pollinator_habitat: '\u273F',
   buffer: '\u26D4',
-};
+}
 
 function ZoneHighlightMesh({
   zone,
@@ -558,48 +550,48 @@ function ZoneHighlightMesh({
   renderOrder,
 }: {
   zone: {
-    x: number;
-    z: number;
-    width: number;
-    depth: number;
-    color: string;
-    type: PlacementZone['type'];
-  } & PlacementZone;
-  getSurfaceHeight: (x: number, z: number) => number;
-  isSelected: boolean;
-  onSelect: () => void;
-  renderOrder: number;
+    x: number
+    z: number
+    width: number
+    depth: number
+    color: string
+    type: PlacementZone['type']
+  } & PlacementZone
+  getSurfaceHeight: (x: number, z: number) => number
+  isSelected: boolean
+  onSelect: () => void
+  renderOrder: number
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const resolution = 12;
+  const meshRef = useRef<THREE.Mesh>(null)
+  const resolution = 12
 
   const baseGeometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(zone.width, zone.depth, resolution - 1, resolution - 1);
-    return geo;
-  }, [zone.width, zone.depth]);
+    const geo = new THREE.PlaneGeometry(zone.width, zone.depth, resolution - 1, resolution - 1)
+    return geo
+  }, [zone.width, zone.depth])
 
   useFrame(() => {
-    if (!meshRef.current) return;
-    const geo = meshRef.current.geometry as THREE.PlaneGeometry;
-    const positions = geo.attributes.position.array as Float32Array;
+    if (!meshRef.current) return
+    const geo = meshRef.current.geometry as THREE.PlaneGeometry
+    const positions = geo.attributes.position.array as Float32Array
 
     for (let i = 0; i < positions.length / 3; i++) {
-      const localX = positions[i * 3];
-      const localY = positions[i * 3 + 1];
+      const localX = positions[i * 3]
+      const localY = positions[i * 3 + 1]
 
-      const worldX = zone.x + localX;
-      const worldZ = zone.z - localY;
+      const worldX = zone.x + localX
+      const worldZ = zone.z - localY
 
-      const height = getSurfaceHeight(worldX, worldZ) + 0.15;
-      positions[i * 3 + 2] = height;
+      const height = getSurfaceHeight(worldX, worldZ) + 0.15
+      positions[i * 3 + 2] = height
     }
 
-    geo.attributes.position.needsUpdate = true;
-    geo.computeVertexNormals();
-  });
+    geo.attributes.position.needsUpdate = true
+    geo.computeVertexNormals()
+  })
 
-  const baseOpacity = zone.type === 'buffer' ? 0.3 : 0.55;
-  const opacity = isSelected ? 0.8 : baseOpacity;
+  const baseOpacity = zone.type === 'buffer' ? 0.3 : 0.55
+  const opacity = isSelected ? 0.8 : baseOpacity
 
   return (
     <mesh
@@ -609,15 +601,15 @@ function ZoneHighlightMesh({
       rotation={[-Math.PI / 2, 0, 0]}
       renderOrder={renderOrder}
       onClick={(e) => {
-        e.stopPropagation();
-        onSelect();
+        e.stopPropagation()
+        onSelect()
       }}
       onPointerOver={(e) => {
-        e.stopPropagation();
-        document.body.style.cursor = 'pointer';
+        e.stopPropagation()
+        document.body.style.cursor = 'pointer'
       }}
       onPointerOut={() => {
-        document.body.style.cursor = 'default';
+        document.body.style.cursor = 'default'
       }}
     >
       <meshBasicMaterial
@@ -632,7 +624,7 @@ function ZoneHighlightMesh({
         polygonOffsetUnits={-4}
       />
     </mesh>
-  );
+  )
 }
 
 function ZoneLabel({
@@ -642,19 +634,19 @@ function ZoneLabel({
   icon,
   getSurfaceHeight,
 }: {
-  x: number;
-  z: number;
-  color: string;
-  icon: string;
-  getSurfaceHeight: (x: number, z: number) => number;
+  x: number
+  z: number
+  color: string
+  icon: string
+  getSurfaceHeight: (x: number, z: number) => number
 }) {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null)
 
   useFrame(() => {
     if (groupRef.current) {
-      groupRef.current.position.y = getSurfaceHeight(x, z) + 0.5;
+      groupRef.current.position.y = getSurfaceHeight(x, z) + 0.5
     }
-  });
+  })
 
   return (
     <group ref={groupRef} position={[x, getSurfaceHeight(x, z) + 0.5, z]}>
@@ -683,7 +675,7 @@ function ZoneLabel({
         </div>
       </Html>
     </group>
-  );
+  )
 }
 
 function ZoneOverlays({
@@ -693,25 +685,25 @@ function ZoneOverlays({
   onZoneClick,
   selectedZoneId,
 }: {
-  zones: PlacementZone[];
-  getSurfaceHeight: (x: number, z: number) => number;
-  polygonBounds: PolygonBounds;
-  onZoneClick?: (zone: PlacementZone | null) => void;
-  selectedZoneId?: string | null;
+  zones: PlacementZone[]
+  getSurfaceHeight: (x: number, z: number) => number
+  polygonBounds: PolygonBounds
+  onZoneClick?: (zone: PlacementZone | null) => void
+  selectedZoneId?: string | null
 }) {
   const processedZones = useMemo(() => {
     return zones.map((zone) => {
-      const wx1 = toPolygonCoord(zone.x1, polygonBounds.minX, polygonBounds.maxX);
-      const wz1 = toPolygonCoord(zone.z1, polygonBounds.minZ, polygonBounds.maxZ);
-      const wx2 = toPolygonCoord(zone.x2, polygonBounds.minX, polygonBounds.maxX);
-      const wz2 = toPolygonCoord(zone.z2, polygonBounds.minZ, polygonBounds.maxZ);
+      const wx1 = toPolygonCoord(zone.x1, polygonBounds.minX, polygonBounds.maxX)
+      const wz1 = toPolygonCoord(zone.z1, polygonBounds.minZ, polygonBounds.maxZ)
+      const wx2 = toPolygonCoord(zone.x2, polygonBounds.minX, polygonBounds.maxX)
+      const wz2 = toPolygonCoord(zone.z2, polygonBounds.minZ, polygonBounds.maxZ)
 
-      const centerX = (wx1 + wx2) / 2;
-      const centerZ = (wz1 + wz2) / 2;
-      const width = Math.abs(wx2 - wx1);
-      const depth = Math.abs(wz2 - wz1);
+      const centerX = (wx1 + wx2) / 2
+      const centerZ = (wz1 + wz2) / 2
+      const width = Math.abs(wx2 - wx1)
+      const depth = Math.abs(wz2 - wz1)
 
-      const color = ZONE_COLORS[zone.type] || '#6b7280';
+      const color = ZONE_COLORS[zone.type] || '#6b7280'
 
       return {
         ...zone,
@@ -722,14 +714,14 @@ function ZoneOverlays({
         color,
         labelX: wx1 + width * 0.12,
         labelZ: wz1 + depth * 0.12,
-      };
-    });
-  }, [zones, polygonBounds]);
+      }
+    })
+  }, [zones, polygonBounds])
 
   return (
     <group renderOrder={100}>
       {processedZones.map((zone, i) => {
-        const isSelected = selectedZoneId === zone.id;
+        const isSelected = selectedZoneId === zone.id
 
         return (
           <group key={zone.id || i}>
@@ -751,167 +743,169 @@ function ZoneOverlays({
               />
             )}
           </group>
-        );
+        )
       })}
     </group>
-  );
+  )
 }
 
 // Generate realistic terrain heightmap using multiple noise octaves
 function generateTerrainData(width: number, height: number, seed: number = 42) {
-  const data = new Float32Array(width * height);
+  const data = new Float32Array(width * height)
 
   const random = (x: number, y: number) => {
-    const n = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453123;
-    return n - Math.floor(n);
-  };
+    const n = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453123
+    return n - Math.floor(n)
+  }
 
   const smoothNoise = (x: number, y: number, scale: number) => {
-    const x0 = Math.floor(x / scale);
-    const y0 = Math.floor(y / scale);
-    const fx = (x / scale) - x0;
-    const fy = (y / scale) - y0;
+    const x0 = Math.floor(x / scale)
+    const y0 = Math.floor(y / scale)
+    const fx = x / scale - x0
+    const fy = y / scale - y0
 
-    const v00 = random(x0, y0);
-    const v10 = random(x0 + 1, y0);
-    const v01 = random(x0, y0 + 1);
-    const v11 = random(x0 + 1, y0 + 1);
+    const v00 = random(x0, y0)
+    const v10 = random(x0 + 1, y0)
+    const v01 = random(x0, y0 + 1)
+    const v11 = random(x0 + 1, y0 + 1)
 
-    const i1 = v00 * (1 - fx) + v10 * fx;
-    const i2 = v01 * (1 - fx) + v11 * fx;
+    const i1 = v00 * (1 - fx) + v10 * fx
+    const i2 = v01 * (1 - fx) + v11 * fx
 
-    return i1 * (1 - fy) + i2 * fy;
-  };
+    return i1 * (1 - fy) + i2 * fy
+  }
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      let elevation = 0;
-      elevation += smoothNoise(x, y, 32) * 1.0;
-      elevation += smoothNoise(x, y, 16) * 0.5;
-      elevation += smoothNoise(x, y, 8) * 0.25;
-      elevation += smoothNoise(x, y, 4) * 0.125;
+      let elevation = 0
+      elevation += smoothNoise(x, y, 32) * 1.0
+      elevation += smoothNoise(x, y, 16) * 0.5
+      elevation += smoothNoise(x, y, 8) * 0.25
+      elevation += smoothNoise(x, y, 4) * 0.125
 
-      data[y * width + x] = elevation;
+      data[y * width + x] = elevation
     }
   }
 
-  return data;
+  return data
 }
 
 // Cubic interpolation for smoother upscaling
 function cubicInterpolate(p0: number, p1: number, p2: number, p3: number, t: number) {
-  const v0 = p2 - p0;
-  const v1 = 2 * p0 - 5 * p1 + 4 * p2 - p3;
-  const v2 = -p0 + 3 * p1 - 3 * p2 + p3;
-  return p1 + 0.5 * t * (v0 + t * (v1 + t * v2));
+  const v0 = p2 - p0
+  const v1 = 2 * p0 - 5 * p1 + 4 * p2 - p3
+  const v2 = -p0 + 3 * p1 - 3 * p2 + p3
+  return p1 + 0.5 * t * (v0 + t * (v1 + t * v2))
 }
 
 // Bicubic interpolation for 2D grid
 function bicubicInterpolate(grid: Float32Array, gridSize: number, x: number, y: number) {
-  const xi = Math.floor(x);
-  const yi = Math.floor(y);
-  const dx = x - xi;
-  const dy = y - yi;
+  const xi = Math.floor(x)
+  const yi = Math.floor(y)
+  const dx = x - xi
+  const dy = y - yi
 
-  const p = [];
+  const p = []
   for (let j = -1; j <= 2; j++) {
-    const row = [];
+    const row = []
     for (let i = -1; i <= 2; i++) {
-      let gx = xi + i;
-      let gy = yi + j;
+      let gx = xi + i
+      let gy = yi + j
       // Clamp to edges
-      if (gx < 0) gx = 0;
-      if (gx >= gridSize) gx = gridSize - 1;
-      if (gy < 0) gy = 0;
-      if (gy >= gridSize) gy = gridSize - 1;
-      row.push(grid[gy * gridSize + gx]);
+      if (gx < 0) gx = 0
+      if (gx >= gridSize) gx = gridSize - 1
+      if (gy < 0) gy = 0
+      if (gy >= gridSize) gy = gridSize - 1
+      row.push(grid[gy * gridSize + gx])
     }
-    p.push(row);
+    p.push(row)
   }
 
-  const colResults = [];
+  const colResults = []
   for (let i = 0; i < 4; i++) {
-    colResults.push(cubicInterpolate(p[i][0], p[i][1], p[i][2], p[i][3], dx));
+    colResults.push(cubicInterpolate(p[i][0], p[i][1], p[i][2], p[i][3], dx))
   }
 
-  return cubicInterpolate(colResults[0], colResults[1], colResults[2], colResults[3], dy);
+  return cubicInterpolate(colResults[0], colResults[1], colResults[2], colResults[3], dy)
 }
 
 function mulberry32(seed: number) {
   return () => {
-    let t = (seed += 0x6D2B79F5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+    let t = (seed += 0x6d2b79f5)
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
 }
 
 function clampNumber(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
+  return Math.min(max, Math.max(min, value))
 }
 
 function buildTerrainHeightmap(
   realElevationData: Float32Array | null,
   resolution: number,
   gridWidth: number | null = null,
-  gridHeight: number | null = null
+  gridHeight: number | null = null,
 ) {
   // Use real elevation data if available with valid dimensions
   if (realElevationData && realElevationData.length > 0 && gridWidth && gridHeight) {
-    const expectedLength = gridWidth * gridHeight;
+    const expectedLength = gridWidth * gridHeight
     if (realElevationData.length !== expectedLength) {
-      console.warn(`Elevation data length mismatch: got ${realElevationData.length}, expected ${expectedLength}`);
-      return generateTerrainData(resolution, resolution);
+      console.warn(
+        `Elevation data length mismatch: got ${realElevationData.length}, expected ${expectedLength}`,
+      )
+      return generateTerrainData(resolution, resolution)
     }
 
-    const data = new Float32Array(resolution * resolution);
+    const data = new Float32Array(resolution * resolution)
 
-    let minElev = Infinity;
-    let maxElev = -Infinity;
+    let minElev = Infinity
+    let maxElev = -Infinity
     for (let i = 0; i < realElevationData.length; i++) {
-      minElev = Math.min(minElev, realElevationData[i]);
-      maxElev = Math.max(maxElev, realElevationData[i]);
+      minElev = Math.min(minElev, realElevationData[i])
+      maxElev = Math.max(maxElev, realElevationData[i])
     }
 
-    const range = maxElev - minElev || 1;
+    const range = maxElev - minElev || 1
 
     for (let y = 0; y < resolution; y++) {
       for (let x = 0; x < resolution; x++) {
-        const gx = (x / (resolution - 1)) * (gridWidth - 1);
-        const gy = (y / (resolution - 1)) * (gridHeight - 1);
-        let elev = bicubicInterpolate(realElevationData, gridWidth, gx, gy);
-        elev = ((elev - minElev) / range) * 2.0;
-        data[y * resolution + x] = elev;
+        const gx = (x / (resolution - 1)) * (gridWidth - 1)
+        const gy = (y / (resolution - 1)) * (gridHeight - 1)
+        let elev = bicubicInterpolate(realElevationData, gridWidth, gx, gy)
+        elev = ((elev - minElev) / range) * 2.0
+        data[y * resolution + x] = elev
       }
     }
 
-    return data;
+    return data
   }
 
-  return generateTerrainData(resolution, resolution);
+  return generateTerrainData(resolution, resolution)
 }
 
 function sampleTerrainHeight(terrainData: Float32Array, resolution: number, x: number, z: number) {
-  const u = clampNumber((x + TERRAIN_HALF) / TERRAIN_SIZE, 0, 1);
-  const v = clampNumber((-z + TERRAIN_HALF) / TERRAIN_SIZE, 0, 1);
+  const u = clampNumber((x + TERRAIN_HALF) / TERRAIN_SIZE, 0, 1)
+  const v = clampNumber((-z + TERRAIN_HALF) / TERRAIN_SIZE, 0, 1)
 
-  const gx = u * (resolution - 1);
-  const gy = (1 - v) * (resolution - 1);
-  const x0 = Math.floor(gx);
-  const y0 = Math.floor(gy);
-  const x1 = Math.min(x0 + 1, resolution - 1);
-  const y1 = Math.min(y0 + 1, resolution - 1);
-  const tx = gx - x0;
-  const ty = gy - y0;
+  const gx = u * (resolution - 1)
+  const gy = (1 - v) * (resolution - 1)
+  const x0 = Math.floor(gx)
+  const y0 = Math.floor(gy)
+  const x1 = Math.min(x0 + 1, resolution - 1)
+  const y1 = Math.min(y0 + 1, resolution - 1)
+  const tx = gx - x0
+  const ty = gy - y0
 
-  const h00 = terrainData[y0 * resolution + x0];
-  const h10 = terrainData[y0 * resolution + x1];
-  const h01 = terrainData[y1 * resolution + x0];
-  const h11 = terrainData[y1 * resolution + x1];
+  const h00 = terrainData[y0 * resolution + x0]
+  const h10 = terrainData[y0 * resolution + x1]
+  const h01 = terrainData[y1 * resolution + x0]
+  const h11 = terrainData[y1 * resolution + x1]
 
-  const hx0 = h00 + (h10 - h00) * tx;
-  const hx1 = h01 + (h11 - h01) * tx;
-  return hx0 + (hx1 - hx0) * ty;
+  const hx0 = h00 + (h10 - h00) * tx
+  const hx1 = h01 + (h11 - h01) * tx
+  return hx0 + (hx1 - hx0) * ty
 }
 
 function getTerrainSurfaceHeight(
@@ -919,29 +913,27 @@ function getTerrainSurfaceHeight(
   resolution: number,
   x: number,
   z: number,
-  revealScale: number
+  revealScale: number,
 ) {
-  const elevation = sampleTerrainHeight(terrainData, resolution, x, z) * TERRAIN_ELEVATION_SCALE;
-  return TERRAIN_BASE_Y + elevation * revealScale;
+  const elevation = sampleTerrainHeight(terrainData, resolution, x, z) * TERRAIN_ELEVATION_SCALE
+  return TERRAIN_BASE_Y + elevation * revealScale
 }
 
 function downsampleTerrainData(
   terrainData: Float32Array,
   resolution: number,
-  gridSize: number
+  gridSize: number,
 ): number[] {
-  const downsampled: number[] = [];
+  const downsampled: number[] = []
   for (let y = 0; y < gridSize; y++) {
     for (let x = 0; x < gridSize; x++) {
-      const worldX = (x / (gridSize - 1)) * TERRAIN_SIZE - TERRAIN_HALF;
-      const worldZ = (y / (gridSize - 1)) * TERRAIN_SIZE - TERRAIN_HALF;
-      downsampled.push(sampleTerrainHeight(terrainData, resolution, worldX, worldZ));
+      const worldX = (x / (gridSize - 1)) * TERRAIN_SIZE - TERRAIN_HALF
+      const worldZ = (y / (gridSize - 1)) * TERRAIN_SIZE - TERRAIN_HALF
+      downsampled.push(sampleTerrainHeight(terrainData, resolution, worldX, worldZ))
     }
   }
-  return downsampled;
+  return downsampled
 }
-
-
 
 function TerrainMesh({
   phase,
@@ -950,40 +942,40 @@ function TerrainMesh({
   terrainData,
   polygon,
 }: {
-  phase: AnalysisPhase;
-  progress: number;
-  revealProgress: number;
-  terrainData: Float32Array;
-  polygon?: PolygonCoordinates[] | null;
+  phase: AnalysisPhase
+  progress: number
+  revealProgress: number
+  terrainData: Float32Array
+  polygon?: PolygonCoordinates[] | null
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const meshRef = useRef<THREE.Mesh>(null)
+  const materialRef = useRef<THREE.ShaderMaterial>(null)
 
-  const resolution = TERRAIN_RESOLUTION;
+  const resolution = TERRAIN_RESOLUTION
 
   const geometryData = useMemo(() => {
-    const { normalized, scaleX, scaleZ } = normalizePolygonTo3D(polygon || []);
+    const { normalized, scaleX, scaleZ } = normalizePolygonTo3D(polygon || [])
 
     if (polygon && polygon.length >= 3) {
-      return createPolygonTerrainGeometry(normalized, terrainData, resolution, scaleX, scaleZ);
+      return createPolygonTerrainGeometry(normalized, terrainData, resolution, scaleX, scaleZ)
     }
 
-    const geo = new THREE.PlaneGeometry(10, 10, resolution - 1, resolution - 1);
-    const positions = geo.attributes.position.array as Float32Array;
-    const vertexCount = positions.length / 3;
-    const alphas = new Float32Array(vertexCount).fill(1.0);
-    const edgeDistances = new Float32Array(vertexCount).fill(1.0);
+    const geo = new THREE.PlaneGeometry(10, 10, resolution - 1, resolution - 1)
+    const positions = geo.attributes.position.array as Float32Array
+    const vertexCount = positions.length / 3
+    const alphas = new Float32Array(vertexCount).fill(1.0)
+    const edgeDistances = new Float32Array(vertexCount).fill(1.0)
 
     for (let i = 0; i < terrainData.length; i++) {
-      const elevation = terrainData[i];
-      positions[i * 3 + 2] = elevation * TERRAIN_ELEVATION_SCALE;
+      const elevation = terrainData[i]
+      positions[i * 3 + 2] = elevation * TERRAIN_ELEVATION_SCALE
     }
 
-    geo.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
-    geo.setAttribute('edgeDist', new THREE.BufferAttribute(edgeDistances, 1));
-    geo.computeVertexNormals();
-    return geo;
-  }, [terrainData, polygon, resolution]);
+    geo.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1))
+    geo.setAttribute('edgeDist', new THREE.BufferAttribute(edgeDistances, 1))
+    geo.computeVertexNormals()
+    return geo
+  }, [terrainData, polygon, resolution])
 
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
@@ -1087,21 +1079,21 @@ function TerrainMesh({
       `,
       transparent: true,
       side: THREE.DoubleSide,
-    });
-  }, []);
+    })
+  }, [])
 
   useFrame(() => {
     if (materialRef.current) {
-      materialRef.current.uniforms.uRevealProgress.value = revealProgress;
+      materialRef.current.uniforms.uRevealProgress.value = revealProgress
 
-      const targetScale = Math.min(revealProgress * 2, 1);
+      const targetScale = Math.min(revealProgress * 2, 1)
       materialRef.current.uniforms.uElevationScale.value = THREE.MathUtils.lerp(
         materialRef.current.uniforms.uElevationScale.value,
         targetScale,
-        0.05
-      );
+        0.05,
+      )
     }
-  });
+  })
 
   return (
     <mesh
@@ -1112,13 +1104,12 @@ function TerrainMesh({
     >
       <primitive object={shaderMaterial} ref={materialRef} attach="material" />
     </mesh>
-  );
+  )
 }
-
 
 // Beautiful animated grid floor
 function GridFloor({ revealProgress }: { revealProgress: number }) {
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const materialRef = useRef<THREE.ShaderMaterial>(null)
 
   const gridMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
@@ -1163,64 +1154,64 @@ function GridFloor({ revealProgress }: { revealProgress: number }) {
       `,
       transparent: true,
       side: THREE.DoubleSide,
-    });
-  }, []);
+    })
+  }, [])
 
   useFrame((state) => {
     if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
-      materialRef.current.uniforms.uReveal.value = revealProgress;
+      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime
+      materialRef.current.uniforms.uReveal.value = revealProgress
     }
-  });
+  })
 
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.5, 0]}>
       <planeGeometry args={[35, 35]} />
       <primitive object={gridMaterial} ref={materialRef} attach="material" />
     </mesh>
-  );
+  )
 }
 
 function CameraController({ isEntering }: { phase: AnalysisPhase; isEntering: boolean }) {
-  const { camera } = useThree();
-  const targetPosition = useRef(new THREE.Vector3(10, 7, 10));
-  const animationProgress = useRef(0);
-  const isAnimating = useRef(true);
+  const { camera } = useThree()
+  const targetPosition = useRef(new THREE.Vector3(10, 7, 10))
+  const animationProgress = useRef(0)
+  const isAnimating = useRef(true)
 
   useEffect(() => {
     if (isEntering) {
-      camera.position.set(20, 15, 20);
-      targetPosition.current.set(10, 7, 10);
-      animationProgress.current = 0;
-      isAnimating.current = true;
+      camera.position.set(20, 15, 20)
+      targetPosition.current.set(10, 7, 10)
+      animationProgress.current = 0
+      isAnimating.current = true
     }
-  }, [isEntering, camera]);
+  }, [isEntering, camera])
 
   useFrame(() => {
-    if (!isAnimating.current) return;
+    if (!isAnimating.current) return
 
-    animationProgress.current += 0.015;
+    animationProgress.current += 0.015
 
     if (animationProgress.current >= 1) {
-      isAnimating.current = false;
-      return;
+      isAnimating.current = false
+      return
     }
 
-    camera.position.lerp(targetPosition.current, 0.03);
-    camera.lookAt(0, 0, 0);
-  });
+    camera.position.lerp(targetPosition.current, 0.03)
+    camera.lookAt(0, 0, 0)
+  })
 
-  return null;
+  return null
 }
 
 // Main scene component with transition support
 interface TerrainAnalysisSceneProps {
-  phase: AnalysisPhase;
-  progress: number;
-  isVisible: boolean;
-  onTransitionComplete?: () => void;
-  polygon?: PolygonCoordinates[] | null;
-  className?: string;
+  phase: AnalysisPhase
+  progress: number
+  isVisible: boolean
+  onTransitionComplete?: () => void
+  polygon?: PolygonCoordinates[] | null
+  className?: string
 }
 
 export function TerrainAnalysisScene({
@@ -1229,93 +1220,116 @@ export function TerrainAnalysisScene({
   isVisible,
   onTransitionComplete,
   polygon,
-  className
+  className,
 }: TerrainAnalysisSceneProps) {
-  const [mounted, setMounted] = useState(false);
-  const [isEntering, setIsEntering] = useState(true);
-  const [revealProgress, setRevealProgress] = useState(0);
-  const [realElevationData, setRealElevationData] = useState<Float32Array | null>(null);
-  const [elevationBounds, setElevationBounds] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
-  const [elevationGridWidth, setElevationGridWidth] = useState<number | null>(null);
-  const [elevationGridHeight, setElevationGridHeight] = useState<number | null>(null);
-  const [placementPlan, setPlacementPlan] = useState<PlacementPlan | null>(null);
-  const [selectedZone, setSelectedZone] = useState<PlacementZone | null>(null);
-  const draftConstraints = usePlanStore((state) => state.draftConstraints);
+  const [mounted, setMounted] = useState(false)
+  const [isEntering, setIsEntering] = useState(true)
+  const [revealProgress, setRevealProgress] = useState(0)
+  const [realElevationData, setRealElevationData] = useState<Float32Array | null>(null)
+  const [elevationBounds, setElevationBounds] = useState<{
+    north: number
+    south: number
+    east: number
+    west: number
+  } | null>(null)
+  const [elevationGridWidth, setElevationGridWidth] = useState<number | null>(null)
+  const [elevationGridHeight, setElevationGridHeight] = useState<number | null>(null)
+  const [placementPlan, setPlacementPlan] = useState<PlacementPlan | null>(null)
+  const [selectedZone, setSelectedZone] = useState<PlacementZone | null>(null)
+  const draftConstraints = usePlanStore((state) => state.draftConstraints)
   const terrainData = useMemo(
-    () => buildTerrainHeightmap(realElevationData, TERRAIN_RESOLUTION, elevationGridWidth, elevationGridHeight),
-    [realElevationData, elevationGridWidth, elevationGridHeight]
-  );
+    () =>
+      buildTerrainHeightmap(
+        realElevationData,
+        TERRAIN_RESOLUTION,
+        elevationGridWidth,
+        elevationGridHeight,
+      ),
+    [realElevationData, elevationGridWidth, elevationGridHeight],
+  )
 
   // Calculate polygon bounds for placing objects within the terrain
-  const polygonBounds = useMemo(() => getPolygonBounds(polygon), [polygon]);
+  const polygonBounds = useMemo(() => getPolygonBounds(polygon), [polygon])
   // Use ref to track revealProgress so useFrame callbacks get current value
-  const revealProgressRef = useRef(revealProgress);
+  const revealProgressRef = useRef(revealProgress)
   useEffect(() => {
-    revealProgressRef.current = revealProgress;
-  }, [revealProgress]);
+    revealProgressRef.current = revealProgress
+  }, [revealProgress])
 
   const getSurfaceHeight = useCallback(
     (x: number, z: number) => {
-      const revealScale = Math.min(revealProgressRef.current * 2, 1);
-      return getTerrainSurfaceHeight(terrainData, TERRAIN_RESOLUTION, x, z, revealScale);
+      const revealScale = Math.min(revealProgressRef.current * 2, 1)
+      return getTerrainSurfaceHeight(terrainData, TERRAIN_RESOLUTION, x, z, revealScale)
     },
-    [terrainData]
-  );
+    [terrainData],
+  )
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (polygon && polygon.length >= 3) {
       fetchElevationGrid(polygon)
         .then(({ data, gridWidth, gridHeight, bounds }) => {
-          setRealElevationData(data);
-          setElevationBounds(bounds);
-          setElevationGridWidth(gridWidth);
-          setElevationGridHeight(gridHeight);
+          setRealElevationData(data)
+          setElevationBounds(bounds)
+          setElevationGridWidth(gridWidth)
+          setElevationGridHeight(gridHeight)
         })
-        .catch(err => {
-          console.error("Failed to load elevation data", err);
-        });
+        .catch((err) => {
+          console.error('Failed to load elevation data', err)
+        })
     }
-  }, [polygon]);
+  }, [polygon])
 
   useEffect(() => {
     if (!draftConstraints?.budget || !draftConstraints?.energy || !draftConstraints?.technical) {
-      return;
+      return
     }
 
-    let cancelled = false;
-    const controller = new AbortController();
+    let cancelled = false
+    const controller = new AbortController()
 
-    const hasRealData = realElevationData && elevationBounds && elevationGridWidth && elevationGridHeight;
-    const gridWidth = hasRealData ? elevationGridWidth : 10;
-    const gridHeight = hasRealData ? elevationGridHeight : 10;
+    const hasRealData =
+      realElevationData && elevationBounds && elevationGridWidth && elevationGridHeight
+    const gridWidth = hasRealData ? elevationGridWidth : 10
+    const gridHeight = hasRealData ? elevationGridHeight : 10
     const elevationGrid = hasRealData
       ? Array.from(realElevationData)
-      : downsampleTerrainData(terrainData, TERRAIN_RESOLUTION, gridWidth);
+      : downsampleTerrainData(terrainData, TERRAIN_RESOLUTION, gridWidth)
 
     const bounds = hasRealData
       ? elevationBounds
-      : calculateBounds(polygon?.map(p => ({ lat: p.lat, lng: p.lng })) ?? []);
+      : calculateBounds(polygon?.map((p) => ({ lat: p.lat, lng: p.lng })) ?? [])
 
     if (!bounds) {
-      console.warn('Cannot calculate placements: missing bounds');
-      return;
+      console.warn('Cannot calculate placements: missing bounds')
+      return
     }
 
-    const latRange = bounds.north - bounds.south;
-    const cellSizeMeters = (latRange * 111320) / gridHeight;
+    const latRange = bounds.north - bounds.south
+    const cellSizeMeters = (latRange * 111320) / gridHeight
 
-    const elevationFloat32 = new Float32Array(elevationGrid);
-    const slopeGrid = calculateSlope(elevationFloat32, gridWidth, gridHeight, cellSizeMeters);
-    const aspectGrid = calculateAspect(elevationFloat32, gridWidth, gridHeight);
-    const solarSuitability = calculateSolarSuitability(elevationFloat32, slopeGrid, aspectGrid, gridWidth, gridHeight);
-    const windSuitability = calculateWindSuitability(elevationFloat32, slopeGrid, gridWidth, gridHeight);
+    const elevationFloat32 = new Float32Array(elevationGrid)
+    const slopeGrid = calculateSlope(elevationFloat32, gridWidth, gridHeight, cellSizeMeters)
+    const aspectGrid = calculateAspect(elevationFloat32, gridWidth, gridHeight)
+    const solarSuitability = calculateSolarSuitability(
+      elevationFloat32,
+      slopeGrid,
+      aspectGrid,
+      gridWidth,
+      gridHeight,
+    )
+    const windSuitability = calculateWindSuitability(
+      elevationFloat32,
+      slopeGrid,
+      gridWidth,
+      gridHeight,
+    )
 
     const streamPlacements = async () => {
-      console.log('[Placements] Starting fetch...');
+      console.log('[Placements] Starting fetch...')
       try {
         const res = await fetch('/api/terrain/placements', {
           method: 'POST',
@@ -1332,113 +1346,123 @@ export function TerrainAnalysisScene({
             bounds,
           }),
           signal: controller.signal,
-        });
+        })
 
-        console.log('[Placements] Response status:', res.status);
-        if (!res.ok) throw new Error('Placement plan request failed');
-        if (!res.body) throw new Error('No response body');
+        console.log('[Placements] Response status:', res.status)
+        if (!res.ok) throw new Error('Placement plan request failed')
+        if (!res.body) throw new Error('No response body')
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let accumulated = '';
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let accumulated = ''
 
         while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          if (cancelled) break;
+          const { done, value } = await reader.read()
+          if (done) break
+          if (cancelled) break
 
-          const chunk = decoder.decode(value, { stream: true });
-          accumulated += chunk;
-          console.log('[Placements] Chunk received:', chunk.length, 'chars');
+          const chunk = decoder.decode(value, { stream: true })
+          accumulated += chunk
+          console.log('[Placements] Chunk received:', chunk.length, 'chars')
 
           try {
-            const jsonStart = accumulated.indexOf('{');
-            if (jsonStart === -1) continue;
+            const jsonStart = accumulated.indexOf('{')
+            if (jsonStart === -1) continue
 
-            const jsonPart = accumulated.slice(jsonStart);
-            const parsed = parsePartialJson(jsonPart) as Partial<PlacementPlan>;
+            const jsonPart = accumulated.slice(jsonStart)
+            const parsed = parsePartialJson(jsonPart) as Partial<PlacementPlan>
 
             if (parsed?.zones?.length) {
-              const validatedZones = parsed.zones.filter(z => validateZone(z));
-              console.log('[Placements] Validated zones:', validatedZones.length);
-              setPlacementPlan({ zones: validatedZones });
+              const validatedZones = parsed.zones.filter((z) => validateZone(z))
+              console.log('[Placements] Validated zones:', validatedZones.length)
+              setPlacementPlan({ zones: validatedZones })
             }
           } catch {
             // partial-json couldn't parse yet
           }
         }
 
-        console.log('[Placements] Stream complete. Total:', accumulated.length, 'chars');
+        console.log('[Placements] Stream complete. Total:', accumulated.length, 'chars')
         if (!cancelled) {
           try {
-            const jsonStart = accumulated.indexOf('{');
-            const jsonEnd = accumulated.lastIndexOf('}');
+            const jsonStart = accumulated.indexOf('{')
+            const jsonEnd = accumulated.lastIndexOf('}')
             if (jsonStart !== -1 && jsonEnd > jsonStart) {
-              const finalJson = JSON.parse(accumulated.slice(jsonStart, jsonEnd + 1)) as PlacementPlan;
-              const validatedZones = (finalJson.zones ?? []).filter(z => validateZone(z));
+              const finalJson = JSON.parse(
+                accumulated.slice(jsonStart, jsonEnd + 1),
+              ) as PlacementPlan
+              const validatedZones = (finalJson.zones ?? []).filter((z) => validateZone(z))
 
               if (validatedZones.length === 0) {
-                throw new Error('No valid zones found in response');
+                throw new Error('No valid zones found in response')
               }
 
-              console.log('[Placements] Final zones:', validatedZones.length);
-              setPlacementPlan({ zones: validatedZones });
+              console.log('[Placements] Final zones:', validatedZones.length)
+              setPlacementPlan({ zones: validatedZones })
             }
           } catch (parseError) {
-            console.error('[Placements] Failed to parse final JSON or no zones:', parseError);
-            throw parseError;
+            console.error('[Placements] Failed to parse final JSON or no zones:', parseError)
+            throw parseError
           }
         }
       } catch (error) {
         if (!cancelled) {
-          console.error('[Placements] Error:', error);
+          console.error('[Placements] Error:', error)
 
-          console.log('[Placements] Activating fallback demo data');
+          console.log('[Placements] Activating fallback demo data')
           const fallbackZones: PlacementZone[] = [
             { x1: -0.5, z1: 0.2, x2: 0.5, z2: 0.6, type: 'solar', suitability: 95 },
-            { x1: 0.4, z1: -0.7, x2: 0.7, z2: -0.4, type: 'wind', suitability: 88 }
-          ];
-          setPlacementPlan({ zones: fallbackZones });
+            { x1: 0.4, z1: -0.7, x2: 0.7, z2: -0.4, type: 'wind', suitability: 88 },
+          ]
+          setPlacementPlan({ zones: fallbackZones })
         }
       }
-    };
+    }
 
-    streamPlacements();
+    streamPlacements()
 
     return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [realElevationData, terrainData, elevationBounds, elevationGridWidth, elevationGridHeight, draftConstraints, polygon]);
+      cancelled = true
+      controller.abort()
+    }
+  }, [
+    realElevationData,
+    terrainData,
+    elevationBounds,
+    elevationGridWidth,
+    elevationGridHeight,
+    draftConstraints,
+    polygon,
+  ])
 
   // Progressive reveal animation
   useEffect(() => {
     if (isVisible) {
-      setIsEntering(true);
-      setRevealProgress(0);
+      setIsEntering(true)
+      setRevealProgress(0)
 
       // Animate reveal progress
-      const startTime = Date.now();
-      const duration = 3000; // 3 seconds for full reveal
+      const startTime = Date.now()
+      const duration = 3000 // 3 seconds for full reveal
 
       const animate = () => {
-        const elapsed = Date.now() - startTime;
-        const newProgress = Math.min(elapsed / duration, 1);
-        setRevealProgress(newProgress);
+        const elapsed = Date.now() - startTime
+        const newProgress = Math.min(elapsed / duration, 1)
+        setRevealProgress(newProgress)
 
         if (newProgress < 1) {
-          requestAnimationFrame(animate);
+          requestAnimationFrame(animate)
         } else {
-          setIsEntering(false);
-          onTransitionComplete?.();
+          setIsEntering(false)
+          onTransitionComplete?.()
         }
-      };
+      }
 
-      requestAnimationFrame(animate);
+      requestAnimationFrame(animate)
     }
-  }, [isVisible, onTransitionComplete]);
+  }, [isVisible, onTransitionComplete])
 
-  if (!mounted) return null;
+  if (!mounted) return null
 
   return (
     <AnimatePresence>
@@ -1449,18 +1473,15 @@ export function TerrainAnalysisScene({
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{
             duration: 0.8,
-            ease: [0.22, 1, 0.36, 1]
+            ease: [0.22, 1, 0.36, 1],
           }}
-          className={cn(
-            "absolute top-0 bottom-0 left-0 right-[420px] z-0",
-            className
-          )}
+          className={cn('absolute top-0 bottom-0 left-0 right-[420px] z-0', className)}
         >
           <Canvas
             gl={{
               antialias: true,
               alpha: true,
-              powerPreference: 'high-performance'
+              powerPreference: 'high-performance',
             }}
             dpr={[1, 2]}
           >
@@ -1470,11 +1491,7 @@ export function TerrainAnalysisScene({
             <CameraController phase={phase} isEntering={isEntering} />
 
             <ambientLight intensity={0.5} />
-            <directionalLight
-              position={[10, 15, 8]}
-              intensity={1.0}
-              color="#fff7ed"
-            />
+            <directionalLight position={[10, 15, 8]} intensity={1.0} color="#fff7ed" />
             <pointLight position={[-8, 5, -8]} intensity={0.35} color="#86efac" />
             <pointLight position={[8, 3, 8]} intensity={0.25} color="#7dd3fc" />
             <hemisphereLight args={['#cfe8ff', '#b7e4c7', 0.35]} />
@@ -1542,7 +1559,12 @@ export function TerrainAnalysisScene({
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -1560,7 +1582,9 @@ export function TerrainAnalysisScene({
                         }}
                       />
                     </div>
-                    <span className="text-xs font-medium text-gray-700">{selectedZone.suitability}%</span>
+                    <span className="text-xs font-medium text-gray-700">
+                      {selectedZone.suitability}%
+                    </span>
                   </div>
                 </div>
 
@@ -1568,7 +1592,8 @@ export function TerrainAnalysisScene({
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">Est. Capacity</span>
                     <span className="text-xs font-medium text-gray-700">
-                      {selectedZone.estimatedCapacityMW} {selectedZone.type === 'battery_storage' ? 'MWh' : 'MW'}
+                      {selectedZone.estimatedCapacityMW}{' '}
+                      {selectedZone.type === 'battery_storage' ? 'MWh' : 'MW'}
                     </span>
                   </div>
                 )}
@@ -1584,7 +1609,7 @@ export function TerrainAnalysisScene({
         </motion.div>
       )}
     </AnimatePresence>
-  );
+  )
 }
 
-export default TerrainAnalysisScene;
+export default TerrainAnalysisScene

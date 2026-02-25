@@ -20,12 +20,12 @@ Pulsera is a real-time community safety platform that uses Apple Watch vitals, i
 
 ## Team
 
-| Name | Role |
-|------|------|
-| **Nik Nandi** | Lead Software Engineer |
-| **Aritra Saha** | Data Scientist & ML Researcher |
-| **Akshat Vasisht** | Operations & Strategy |
-| **Caio Jahn** | Product Strategy |
+| Name               | Role                           |
+| ------------------ | ------------------------------ |
+| **Nik Nandi**      | Lead Software Engineer         |
+| **Aritra Saha**    | Data Scientist & ML Researcher |
+| **Akshat Vasisht** | Operations & Strategy          |
+| **Caio Jahn**      | Product Strategy               |
 
 ## How It Works
 
@@ -43,17 +43,18 @@ Pulsera is a real-time community safety platform that uses Apple Watch vitals, i
 
 ---
 
-| App | Tech | Description |
-|-----|------|-------------|
-| **Watch** | SwiftUI, HealthKit, Combine | Wearable companion — streams vitals, runs episode flow (anomaly detection, breathing exercise, calming music, resolution), sends events via WebSocket |
-| **Mobile** | Expo (React Native), TypeScript, Zustand | Family dashboard — receives real-time episode alerts, contactless camera check-in via SmartSpectra SDK, family member map with geofencing |
-| **Web** | Next.js 16, React 19, Three.js, MapLibre GL | Community analytics portal — 3D terrain visualization of safety zones, geographic anomaly heatmaps, live status feeds |
-| **Server** | FastAPI, SQLModel, PyTorch | Backend — PulseNet ML inference, episode lifecycle management, WebSocket telemetry ingestion, Gemini LLM analysis |
-| **Relay** | Python, websockets | Lightweight bridge — translates watch events to mobile notification format, broadcasts to subscribed family groups |
+| App        | Tech                                        | Description                                                                                                                                           |
+| ---------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Watch**  | SwiftUI, HealthKit, Combine                 | Wearable companion — streams vitals, runs episode flow (anomaly detection, breathing exercise, calming music, resolution), sends events via WebSocket |
+| **Mobile** | Expo (React Native), TypeScript, Zustand    | Family dashboard — receives real-time episode alerts, contactless camera check-in via SmartSpectra SDK, family member map with geofencing             |
+| **Web**    | Next.js 16, React 19, Three.js, MapLibre GL | Community analytics portal — 3D terrain visualization of safety zones, geographic anomaly heatmaps, live status feeds                                 |
+| **Server** | FastAPI, SQLModel, PyTorch                  | Backend — PulseNet ML inference, episode lifecycle management, WebSocket telemetry ingestion, Gemini LLM analysis                                     |
+| **Relay**  | Python, websockets                          | Lightweight bridge — translates watch events to mobile notification format, broadcasts to subscribed family groups                                    |
 
 ## Tools & Technologies
 
 **Frontend & Mobile**
+
 - SwiftUI + HealthKit (watchOS)
 - Expo SDK 54 + React Native 0.81 + Expo Router (mobile)
 - Next.js 16 + React 19 + Tailwind CSS v4 (web)
@@ -63,18 +64,21 @@ Pulsera is a real-time community safety platform that uses Apple Watch vitals, i
 - shadcn/ui + Radix UI + Lucide Icons (web components)
 
 **Backend & ML**
+
 - FastAPI + Uvicorn (async Python server)
 - SQLModel + SQLAlchemy + SQLite (database ORM)
 - PyTorch 2.5+ (PulseNet anomaly detection model)
 - NumPy (data processing)
 
 **External APIs & Services**
+
 - [ElevenLabs Conversational AI](https://elevenlabs.io/) — Real-time voice agent for stress intervention via WebSocket, guides breathing exercises with synthesized speech on Apple Watch
 - [SmartSpectra SDK](https://www.smartspectra.com/) — Contactless vital signs measurement through iPhone front camera (pulse rate, breathing rate, blink rate, facial expression detection)
 - [Google Generative AI (Gemini)](https://ai.google.dev/) — LLM-powered health analysis and recommendations
 - [Anthropic Claude](https://www.anthropic.com/) — Alternative LLM backend for analysis
 
 **Infrastructure**
+
 - WebSockets (real-time communication across all layers)
 - Expo Camera (camera permissions and preview for check-in)
 - Apple HealthKit (heart rate and HRV streaming)

@@ -57,6 +57,7 @@ open PulseraWatch.xcodeproj
 ### 3. HealthKit Permissions
 
 The app requests the following HealthKit permissions:
+
 - **Heart Rate**: Read access
 - **Heart Rate Variability (HRV)**: Read access
 
@@ -77,11 +78,13 @@ The relay server will start on `localhost:8765`.
 ### 5. Build and Run
 
 #### In Simulator:
+
 1. Select a watchOS simulator (Apple Watch Series 9 or later recommended)
 2. Press **Cmd+R** or click the Run button
 3. The app will launch in the simulator
 
 #### On Physical Device:
+
 1. Pair your Apple Watch with your Mac via Xcode
 2. Select your paired watch as the run destination
 3. Press **Cmd+R** to build and deploy
@@ -117,22 +120,28 @@ The watch app doesn't use environment files, but requires configuration for:
 - **ElevenLabs Agent ID**: Hardcoded in `AIAgentService.swift` (update if using a different agent)
 - **WebSocket URL**: Configured at runtime via Pairing View
 
-##  Development Notes
+## Development Notes
 
 ### Coordinator Pattern
+
 The app uses SwiftUI's `@Observable` and Combine for reactive state management. `EpisodeViewModel` coordinates between services.
 
 ### HealthKit Streaming
+
 `HealthService` uses `HKAnchoredObjectQuery` to stream live heart rate data. Updates arrive every ~5 seconds during active workouts, less frequently otherwise.
 
 ### WebSocket Protocol
+
 Messages are JSON-encoded with a `type` field:
+
 - `episode-start`: Sent when an episode begins
 - `episode-resolution`: Sent when an episode completes
 - `pulse-checkin`: (Future) Check-in data from phone
 
 ### Haptic Feedback
+
 Custom haptic patterns sync with breathing cues:
+
 - **Inhale**: Rising notification
 - **Hold**: Continuous pattern
 - **Exhale**: Falling notification
@@ -140,21 +149,25 @@ Custom haptic patterns sync with breathing cues:
 ## Troubleshooting
 
 ### HealthKit Data Not Streaming
+
 - Ensure HealthKit permissions are granted in watchOS Settings → Privacy
 - Verify the app has both read and write access
 - Restart the watch app and try again
 
 ### WebSocket Connection Fails
+
 - Confirm the relay server is running (`python3 apps/relay/relay.py`)
 - Check that the IP address is correct (use `ipconfig getifaddr en0` on Mac)
 - Ensure firewall allows connections on port 8765
 
 ### ElevenLabs AI Not Responding
+
 - Verify the ElevenLabs API key is valid in `AIAgentService.swift`
 - Check your internet connection (AI agent requires network)
 - Review console logs for WebSocket errors to the ElevenLabs endpoint
 
 ### Build Errors
+
 - Clean build folder: **Cmd+Shift+K**
 - Update to latest Xcode version
 - Verify macOS and Xcode are compatible with watchOS 10+ SDK

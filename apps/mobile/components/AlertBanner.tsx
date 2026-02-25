@@ -7,40 +7,40 @@
  *   "info"     -> blue-ish muted
  */
 
-import React from "react";
-import { View, Text, Pressable } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { colors } from "@/lib/theme";
-import GlassCard from "@/components/GlassCard";
+import React from 'react'
+import { View, Text, Pressable } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { colors } from '@/lib/theme'
+import GlassCard from '@/components/GlassCard'
 
 interface AlertBannerProps {
-  id: string;
-  severity: "info" | "warning" | "critical";
-  title: string;
-  description: string;
-  onDismiss: (id: string) => void;
+  id: string
+  severity: 'info' | 'warning' | 'critical'
+  title: string
+  description: string
+  onDismiss: (id: string) => void
 }
 
 const severityConfig = {
   critical: {
     bg: `${colors.critical}18`,
     border: colors.critical,
-    icon: "alert-circle" as const,
+    icon: 'alert-circle' as const,
     iconColor: colors.critical,
   },
   warning: {
     bg: `${colors.primary}18`,
     border: colors.primary,
-    icon: "warning" as const,
+    icon: 'warning' as const,
     iconColor: colors.primary,
   },
   info: {
     bg: `${colors.textMuted}12`,
     border: colors.textMuted,
-    icon: "information-circle" as const,
+    icon: 'information-circle' as const,
     iconColor: colors.textMuted,
   },
-};
+}
 
 export default function AlertBanner({
   id,
@@ -49,7 +49,7 @@ export default function AlertBanner({
   description,
   onDismiss,
 }: AlertBannerProps) {
-  const cfg = severityConfig[severity] || severityConfig.info;
+  const cfg = severityConfig[severity] || severityConfig.info
 
   return (
     <GlassCard
@@ -66,10 +66,7 @@ export default function AlertBanner({
           style={{ marginTop: 1, marginRight: 8 }}
         />
         <View className="flex-1">
-          <Text
-            className="font-semibold"
-            style={{ color: colors.text, fontSize: 14 }}
-          >
+          <Text className="font-semibold" style={{ color: colors.text, fontSize: 14 }}>
             {title}
           </Text>
           <Text
@@ -80,14 +77,10 @@ export default function AlertBanner({
             {description}
           </Text>
         </View>
-        <Pressable
-          onPress={() => onDismiss(id)}
-          hitSlop={12}
-          className="ml-2"
-        >
+        <Pressable onPress={() => onDismiss(id)} hitSlop={12} className="ml-2">
           <Ionicons name="close" size={18} color={colors.textMuted} />
         </Pressable>
       </View>
     </GlassCard>
-  );
+  )
 }

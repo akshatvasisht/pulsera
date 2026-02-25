@@ -1,6 +1,6 @@
-'use client';
+'use client'
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Satellite,
   Database,
@@ -19,75 +19,75 @@ import {
   X,
   Save,
   Sparkles,
-  type LucideIcon
-} from 'lucide-react';
-import type { AnalysisPhase } from '@/components/agent';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+  type LucideIcon,
+} from 'lucide-react'
+import type { AnalysisPhase } from '@/components/agent'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface AnalysisOverlayProps {
-  phase: AnalysisPhase;
-  isAnalyzing: boolean;
-  progress: number;
-  locationName?: string | null;
-  areaAcres?: number;
-  onBack?: () => void;
-  onStop?: () => void;
-  onSave?: () => void;
-  isSaving?: boolean;
-  className?: string;
+  phase: AnalysisPhase
+  isAnalyzing: boolean
+  progress: number
+  locationName?: string | null
+  areaAcres?: number
+  onBack?: () => void
+  onStop?: () => void
+  onSave?: () => void
+  isSaving?: boolean
+  className?: string
 }
 
 const phases: {
-  id: AnalysisPhase;
-  label: string;
-  icon: LucideIcon;
-  description: string;
+  id: AnalysisPhase
+  label: string
+  icon: LucideIcon
+  description: string
 }[] = [
-    {
-      id: 'data-collection',
-      label: 'Data Collection',
-      icon: Satellite,
-      description: 'Fetching satellite imagery & terrain data'
-    },
-    {
-      id: 'constraint-integration',
-      label: 'Constraint Analysis',
-      icon: Database,
-      description: 'Mapping boundaries & exclusion zones'
-    },
-    {
-      id: 'technology-optimization',
-      label: 'Technology Optimization',
-      icon: Cpu,
-      description: 'Evaluating solar & wind potential'
-    },
-    {
-      id: 'system-design',
-      label: 'System Design',
-      icon: Zap,
-      description: 'Computing optimal equipment layout'
-    },
-    {
-      id: 'financial-modeling',
-      label: 'Financial Modeling',
-      icon: DollarSign,
-      description: 'Calculating costs & projections'
-    },
-  ];
+  {
+    id: 'data-collection',
+    label: 'Data Collection',
+    icon: Satellite,
+    description: 'Fetching satellite imagery & terrain data',
+  },
+  {
+    id: 'constraint-integration',
+    label: 'Constraint Analysis',
+    icon: Database,
+    description: 'Mapping boundaries & exclusion zones',
+  },
+  {
+    id: 'technology-optimization',
+    label: 'Technology Optimization',
+    icon: Cpu,
+    description: 'Evaluating solar & wind potential',
+  },
+  {
+    id: 'system-design',
+    label: 'System Design',
+    icon: Zap,
+    description: 'Computing optimal equipment layout',
+  },
+  {
+    id: 'financial-modeling',
+    label: 'Financial Modeling',
+    icon: DollarSign,
+    description: 'Calculating costs & projections',
+  },
+]
 
 function PhaseIndicator({
   phaseInfo,
   isActive,
   isComplete,
-  index
+  index,
 }: {
-  phaseInfo: typeof phases[0];
-  isActive: boolean;
-  isComplete: boolean;
-  index: number;
+  phaseInfo: (typeof phases)[0]
+  isActive: boolean
+  isComplete: boolean
+  index: number
 }) {
-  const IconComponent = phaseInfo.icon;
+  const IconComponent = phaseInfo.icon
 
   return (
     <motion.div
@@ -95,24 +95,29 @@ function PhaseIndicator({
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.1 }}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300",
-        isActive && "bg-white/85 border-primary/30 shadow-[0_12px_30px_-22px_rgba(16,185,129,0.45)]",
-        isComplete && !isActive && "bg-white/70 border-emerald-200/50 opacity-70",
-        !isActive && !isComplete && "bg-white/40 border-transparent opacity-35"
+        'flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300',
+        isActive &&
+          'bg-white/85 border-primary/30 shadow-[0_12px_30px_-22px_rgba(16,185,129,0.45)]',
+        isComplete && !isActive && 'bg-white/70 border-emerald-200/50 opacity-70',
+        !isActive && !isComplete && 'bg-white/40 border-transparent opacity-35',
       )}
     >
-      <div className={cn(
-        "w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm",
-        isActive && "bg-primary/15 text-primary ring-1 ring-primary/30",
-        isComplete && !isActive && "bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-200/70",
-        !isActive && !isComplete && "bg-slate-100 text-slate-500"
-      )}>
+      <div
+        className={cn(
+          'w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm',
+          isActive && 'bg-primary/15 text-primary ring-1 ring-primary/30',
+          isComplete &&
+            !isActive &&
+            'bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-200/70',
+          !isActive && !isComplete && 'bg-slate-100 text-slate-500',
+        )}
+      >
         {isComplete && !isActive ? (
           <CheckCircle2 className="w-5 h-5" />
         ) : isActive ? (
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
           >
             <IconComponent className="w-5 h-5" />
           </motion.div>
@@ -122,12 +127,16 @@ function PhaseIndicator({
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className={[
-          "font-medium text-sm",
-          isActive ? "text-primary" : "",
-          isComplete && !isActive ? "text-emerald-600" : "",
-          !isActive && !isComplete ? "text-muted-foreground" : ""
-        ].filter(Boolean).join(" ")}>
+        <p
+          className={[
+            'font-medium text-sm',
+            isActive ? 'text-primary' : '',
+            isComplete && !isActive ? 'text-emerald-600' : '',
+            !isActive && !isComplete ? 'text-muted-foreground' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
           {phaseInfo.label}
         </p>
         {isActive && (
@@ -149,7 +158,7 @@ function PhaseIndicator({
         />
       )}
     </motion.div>
-  );
+  )
 }
 
 function MetricCard({
@@ -158,14 +167,14 @@ function MetricCard({
   value,
   suffix,
   color,
-  delay
+  delay,
 }: {
-  icon: LucideIcon;
-  label: string;
-  value: string | number;
-  suffix?: string;
-  color: string;
-  delay: number;
+  icon: LucideIcon
+  label: string
+  value: string | number
+  suffix?: string
+  color: string
+  delay: number
 }) {
   return (
     <motion.div
@@ -175,7 +184,7 @@ function MetricCard({
       className="bg-white/80 backdrop-blur-md border border-emerald-100/70 rounded-xl p-4 shadow-lg"
     >
       <div className="flex items-center gap-2 mb-2">
-        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", color)}>
+        <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', color)}>
           <IconEl className="w-4 h-4" />
         </div>
         <span className="text-xs text-muted-foreground">{label}</span>
@@ -185,7 +194,7 @@ function MetricCard({
         {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}
       </div>
     </motion.div>
-  );
+  )
 }
 
 export function AnalysisOverlay({
@@ -198,13 +207,13 @@ export function AnalysisOverlay({
   onStop,
   onSave,
   isSaving,
-  className
+  className,
 }: AnalysisOverlayProps) {
-  const currentPhaseIndex = phases.findIndex(p => p.id === phase);
-  const isComplete = phase === 'complete';
+  const currentPhaseIndex = phases.findIndex((p) => p.id === phase)
+  const isComplete = phase === 'complete'
 
   return (
-    <div className={cn("absolute inset-0 z-10 pointer-events-none", className)}>
+    <div className={cn('absolute inset-0 z-10 pointer-events-none', className)}>
       {/* Top Bar */}
       <div className="absolute top-0 left-0 right-0 p-6 pointer-events-auto">
         <div className="flex items-center justify-between">
@@ -311,7 +320,7 @@ export function AnalysisOverlay({
         )}
       </AnimatePresence>
     </div>
-  );
+  )
 }
 
-export default AnalysisOverlay;
+export default AnalysisOverlay

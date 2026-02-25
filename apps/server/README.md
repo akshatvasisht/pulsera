@@ -68,6 +68,7 @@ pip install -e ".[dev]"    # Installs with dev dependencies
 ```
 
 This installs:
+
 - Runtime: `fastapi`, `uvicorn`, `sqlmodel`, `sqlalchemy[asyncio]`, `torch`, `google-generativeai`
 - Dev tools: `pytest`, `httpx`, `ruff`, `black`, `pyright`
 
@@ -111,6 +112,7 @@ npm run dev:server
 Server starts on [http://localhost:8000](http://localhost:8000).
 
 API docs available at:
+
 - **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
@@ -136,16 +138,16 @@ Base URL: `http://localhost:8000`
 
 ### Key Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/episodes/start` | Create a new episode |
-| `PUT` | `/episodes/{id}/resolve` | Mark episode as resolved |
-| `GET` | `/episodes/user/{user_id}` | Get user's episode history |
-| `POST` | `/groups` | Create a family group |
-| `POST` | `/groups/{id}/members` | Add member to group |
-| `POST` | `/alerts` | Create an alert |
-| `POST` | `/health_data/ingest` | Bulk ingest vitals data |
-| `GET` | `/community/zones/{id}/status` | Get zone safety status |
+| Method | Endpoint                       | Description                |
+| ------ | ------------------------------ | -------------------------- |
+| `POST` | `/episodes/start`              | Create a new episode       |
+| `PUT`  | `/episodes/{id}/resolve`       | Mark episode as resolved   |
+| `GET`  | `/episodes/user/{user_id}`     | Get user's episode history |
+| `POST` | `/groups`                      | Create a family group      |
+| `POST` | `/groups/{id}/members`         | Add member to group        |
+| `POST` | `/alerts`                      | Create an alert            |
+| `POST` | `/health_data/ingest`          | Bulk ingest vitals data    |
+| `GET`  | `/community/zones/{id}/status` | Get zone safety status     |
 
 Full API documentation: [docs/API.md](../../docs/API.md)
 
@@ -175,6 +177,7 @@ alembic upgrade head
 ## ML Inference (PulseNet)
 
 PulseNet is a custom PyTorch model that detects anomalies in:
+
 1. **Individual vitals**: Heart rate spikes, HRV drops
 2. **Community patterns**: Correlated distress across geographic zones
 
@@ -190,6 +193,7 @@ result = await service.detect_anomaly(heart_rate=145, hrv=25, user_context={...}
 ### Checkpoint Management
 
 Large model files (`.pt`) are in `checkpoints/`. For production:
+
 - Use Git LFS: `git lfs track "*.pt"`
 - Or host on S3/GCS and download on server start
 
@@ -226,6 +230,7 @@ CMD ["uvicorn", "src.server.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 Build and run:
+
 ```bash
 docker build -t pulsera-server .
 docker run -p 8000:8000 --env-file .env pulsera-server
@@ -254,6 +259,7 @@ docker run -p 8000:8000 --env-file .env pulsera-server
 **Issue**: `ModuleNotFoundError: No module named 'server'`
 
 **Fix**: Ensure installed in editable mode:
+
 ```bash
 pip install -e ".[dev]"
 ```
@@ -263,6 +269,7 @@ pip install -e ".[dev]"
 **Issue**: `database is locked`
 
 **Fix**: SQLite doesn't handle concurrent writes well. Either:
+
 1. Use `timeout=30` in connection string
 2. Migrate to PostgreSQL for production
 
@@ -271,6 +278,7 @@ pip install -e ".[dev]"
 **Issue**: `FileNotFoundError: checkpoints/pulsenet_v1.pt`
 
 **Fix**:
+
 1. Ensure checkpoint file exists
 2. Update `PULSENET_CHECKPOINT_PATH` in `.env`
 3. Or disable ML features temporarily
@@ -280,6 +288,7 @@ pip install -e ".[dev]"
 **Issue**: API requests are slow
 
 **Investigate**:
+
 1. Check if running with `--reload` (disable for benchmarking)
 2. Profile with `py-spy` or `cProfile`
 3. Add database indexes on frequently queried fields

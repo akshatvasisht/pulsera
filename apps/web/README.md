@@ -80,6 +80,7 @@ NEXT_PUBLIC_MAP_TILES_URL=https://tiles.example.com/{z}/{x}/{y}.pbf
 ### Next.js Config
 
 Security headers are pre-configured in `next.config.ts`:
+
 - `X-Frame-Options: DENY`
 - `X-Content-Type-Options: nosniff`
 - `Referrer-Policy: strict-origin-when-cross-origin`
@@ -91,6 +92,7 @@ Security headers are pre-configured in `next.config.ts`:
 ### Landing Page (`/`)
 
 Premium landing experience with:
+
 - Animated crimson dither wave background
 - Frosted glass content panels
 - Warm ember color palette
@@ -99,6 +101,7 @@ Premium landing experience with:
 ### Dashboard (`/dashboard`)
 
 Interactive community safety dashboard:
+
 - 3D terrain with episode heatmap overlay
 - Real-time episode feed (sidebar)
 - Geographic zone filtering
@@ -120,6 +123,7 @@ import { OrbitControls } from '@react-three/drei';
 ```
 
 Performance optimizations:
+
 - Lazy loading of 3D components (`next/dynamic` with `ssr: false`)
 - Instanced rendering for episode markers
 - Level-of-detail (LOD) for terrain mesh
@@ -129,11 +133,13 @@ Performance optimizations:
 ### Design Tokens
 
 Core colors:
+
 - `#942626` - Primary crimson
 - `#1A0A08` - Charcoal background
 - `#FFF1E6` - Ivory text
 
 Fonts:
+
 - **Headlines**: Garet (variable font)
 - **Body/UI**: DM Sans (Google Fonts)
 
@@ -189,6 +195,7 @@ For production, use a process manager (PM2) or containerize with Docker.
 **Issue**: `Module not found: Can't resolve '@/...'`
 
 **Fix**: Ensure `tsconfig.json` has correct path aliases:
+
 ```json
 {
   "compilerOptions": {
@@ -202,8 +209,9 @@ For production, use a process manager (PM2) or containerize with Docker.
 **Issue**: Three.js errors on build
 
 **Fix**: Ensure 3D components are client-only:
+
 ```typescript
-const Dither = dynamic(() => import('@/components/Dither'), { ssr: false });
+const Dither = dynamic(() => import('@/components/Dither'), { ssr: false })
 ```
 
 ### Performance
@@ -211,6 +219,7 @@ const Dither = dynamic(() => import('@/components/Dither'), { ssr: false });
 **Issue**: Slow 3D rendering on low-end devices
 
 **Fix**:
+
 1. Reduce terrain mesh complexity
 2. Lower heatmap resolution
 3. Disable post-processing effects

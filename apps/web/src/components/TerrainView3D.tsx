@@ -1,47 +1,40 @@
-"use client";
+'use client'
 
-import { useRef, useMemo, useEffect, useState, useCallback } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera, Html } from "@react-three/drei";
-import * as THREE from "three";
-import { motion, AnimatePresence } from "motion/react";
-import {
-  MapPin,
-  Activity,
-  Satellite,
-  Layers,
-  Mountain,
-  Loader2,
-} from "lucide-react";
+import { useRef, useMemo, useEffect, useState, useCallback } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { OrbitControls, PerspectiveCamera, Html } from '@react-three/drei'
+import * as THREE from 'three'
+import { motion, AnimatePresence } from 'motion/react'
+import { MapPin, Activity, Satellite, Layers, Mountain, Loader2 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════
    CONSTANTS & TYPES
    ═══════════════════════════════════════════ */
 
-const TERRAIN_RESOLUTION = 96;
-const TERRAIN_SIZE = 12;
-const TERRAIN_HALF = TERRAIN_SIZE / 2;
-const TERRAIN_BASE_Y = -0.8;
-const TERRAIN_ELEVATION_SCALE = 1.2;
+const TERRAIN_RESOLUTION = 96
+const TERRAIN_SIZE = 12
+const TERRAIN_HALF = TERRAIN_SIZE / 2
+const TERRAIN_BASE_Y = -0.8
+const TERRAIN_ELEVATION_SCALE = 1.2
 
 // UGA Campus bounding box (Athens, GA)
 const UGA_BOUNDS = {
-  minLat: 33.940,
+  minLat: 33.94,
   maxLat: 33.958,
-  minLng: -83.390,
+  minLng: -83.39,
   maxLng: -83.368,
-};
+}
 
 interface MemberPin {
-  id: string;
-  name: string;
-  avatar: string;
-  avatarColor: string;
-  latitude: number;
-  longitude: number;
-  heartRate: number;
-  status: string;
-  location: string;
+  id: string
+  name: string
+  avatar: string
+  avatarColor: string
+  latitude: number
+  longitude: number
+  heartRate: number
+  status: string
+  location: string
 }
 
 /* ═══════════════════════════════════════════
@@ -51,66 +44,66 @@ interface MemberPin {
 function generateRealisticTerrain(
   width: number,
   height: number,
-  seed: number = 33948
+  seed: number = 33948,
 ): Float32Array {
-  const data = new Float32Array(width * height);
+  const data = new Float32Array(width * height)
 
   const hash = (x: number, y: number) => {
-    const n = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453123;
-    return n - Math.floor(n);
-  };
+    const n = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453123
+    return n - Math.floor(n)
+  }
 
   const smoothNoise = (x: number, y: number, scale: number) => {
-    const x0 = Math.floor(x / scale);
-    const y0 = Math.floor(y / scale);
-    const fx = x / scale - x0;
-    const fy = y / scale - y0;
-    const sfx = fx * fx * (3 - 2 * fx);
-    const sfy = fy * fy * (3 - 2 * fy);
-    const v00 = hash(x0, y0);
-    const v10 = hash(x0 + 1, y0);
-    const v01 = hash(x0, y0 + 1);
-    const v11 = hash(x0 + 1, y0 + 1);
-    return (v00 * (1 - sfx) + v10 * sfx) * (1 - sfy) + (v01 * (1 - sfx) + v11 * sfx) * sfy;
-  };
+    const x0 = Math.floor(x / scale)
+    const y0 = Math.floor(y / scale)
+    const fx = x / scale - x0
+    const fy = y / scale - y0
+    const sfx = fx * fx * (3 - 2 * fx)
+    const sfy = fy * fy * (3 - 2 * fy)
+    const v00 = hash(x0, y0)
+    const v10 = hash(x0 + 1, y0)
+    const v01 = hash(x0, y0 + 1)
+    const v11 = hash(x0 + 1, y0 + 1)
+    return (v00 * (1 - sfx) + v10 * sfx) * (1 - sfy) + (v01 * (1 - sfx) + v11 * sfx) * sfy
+  }
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      let elevation = 0;
+      let elevation = 0
       // Multi-octave FBM with real-ish terrain character
-      elevation += smoothNoise(x, y, 40) * 1.0;
-      elevation += smoothNoise(x, y, 20) * 0.55;
-      elevation += smoothNoise(x, y, 10) * 0.28;
-      elevation += smoothNoise(x, y, 5) * 0.14;
-      elevation += smoothNoise(x, y, 2.5) * 0.06;
+      elevation += smoothNoise(x, y, 40) * 1.0
+      elevation += smoothNoise(x, y, 20) * 0.55
+      elevation += smoothNoise(x, y, 10) * 0.28
+      elevation += smoothNoise(x, y, 5) * 0.14
+      elevation += smoothNoise(x, y, 2.5) * 0.06
 
       // Ridge noise for more dramatic terrain features
-      const ridge = 1.0 - Math.abs(smoothNoise(x, y, 15) * 2.0 - 1.0);
-      elevation += ridge * ridge * 0.3;
+      const ridge = 1.0 - Math.abs(smoothNoise(x, y, 15) * 2.0 - 1.0)
+      elevation += ridge * ridge * 0.3
 
       // Gentle valley in the center (mimicking Oconee River valley near UGA)
-      const cx = x / width - 0.5;
-      const cy = y / height - 0.5;
-      const valleyDist = Math.sqrt(cx * cx * 0.5 + cy * cy);
-      elevation -= Math.exp(-valleyDist * valleyDist * 8) * 0.3;
+      const cx = x / width - 0.5
+      const cy = y / height - 0.5
+      const valleyDist = Math.sqrt(cx * cx * 0.5 + cy * cy)
+      elevation -= Math.exp(-valleyDist * valleyDist * 8) * 0.3
 
-      data[y * width + x] = elevation;
+      data[y * width + x] = elevation
     }
   }
 
   // Normalize to [0, 1.8]
   let min = Infinity,
-    max = -Infinity;
+    max = -Infinity
   for (let i = 0; i < data.length; i++) {
-    if (data[i] < min) min = data[i];
-    if (data[i] > max) max = data[i];
+    if (data[i] < min) min = data[i]
+    if (data[i] > max) max = data[i]
   }
-  const range = max - min || 1;
+  const range = max - min || 1
   for (let i = 0; i < data.length; i++) {
-    data[i] = ((data[i] - min) / range) * 1.8;
+    data[i] = ((data[i] - min) / range) * 1.8
   }
 
-  return data;
+  return data
 }
 
 /* ═══════════════════════════════════════════
@@ -118,35 +111,30 @@ function generateRealisticTerrain(
    ═══════════════════════════════════════════ */
 
 function geoTo3D(lat: number, lng: number): { x: number; z: number } {
-  const nx = (lng - UGA_BOUNDS.minLng) / (UGA_BOUNDS.maxLng - UGA_BOUNDS.minLng);
-  const nz = 1 - (lat - UGA_BOUNDS.minLat) / (UGA_BOUNDS.maxLat - UGA_BOUNDS.minLat);
+  const nx = (lng - UGA_BOUNDS.minLng) / (UGA_BOUNDS.maxLng - UGA_BOUNDS.minLng)
+  const nz = 1 - (lat - UGA_BOUNDS.minLat) / (UGA_BOUNDS.maxLat - UGA_BOUNDS.minLat)
   return {
     x: (nx - 0.5) * TERRAIN_SIZE,
     z: (nz - 0.5) * TERRAIN_SIZE,
-  };
+  }
 }
 
-function sampleHeight(
-  terrainData: Float32Array,
-  resolution: number,
-  x: number,
-  z: number
-): number {
-  const u = Math.max(0, Math.min(1, (x + TERRAIN_HALF) / TERRAIN_SIZE));
-  const v = Math.max(0, Math.min(1, (-z + TERRAIN_HALF) / TERRAIN_SIZE));
-  const gx = u * (resolution - 1);
-  const gy = (1 - v) * (resolution - 1);
-  const x0 = Math.floor(gx);
-  const y0 = Math.floor(gy);
-  const x1 = Math.min(x0 + 1, resolution - 1);
-  const y1 = Math.min(y0 + 1, resolution - 1);
-  const tx = gx - x0;
-  const ty = gy - y0;
-  const h00 = terrainData[y0 * resolution + x0] || 0;
-  const h10 = terrainData[y0 * resolution + x1] || 0;
-  const h01 = terrainData[y1 * resolution + x0] || 0;
-  const h11 = terrainData[y1 * resolution + x1] || 0;
-  return (h00 * (1 - tx) + h10 * tx) * (1 - ty) + (h01 * (1 - tx) + h11 * tx) * ty;
+function sampleHeight(terrainData: Float32Array, resolution: number, x: number, z: number): number {
+  const u = Math.max(0, Math.min(1, (x + TERRAIN_HALF) / TERRAIN_SIZE))
+  const v = Math.max(0, Math.min(1, (-z + TERRAIN_HALF) / TERRAIN_SIZE))
+  const gx = u * (resolution - 1)
+  const gy = (1 - v) * (resolution - 1)
+  const x0 = Math.floor(gx)
+  const y0 = Math.floor(gy)
+  const x1 = Math.min(x0 + 1, resolution - 1)
+  const y1 = Math.min(y0 + 1, resolution - 1)
+  const tx = gx - x0
+  const ty = gy - y0
+  const h00 = terrainData[y0 * resolution + x0] || 0
+  const h10 = terrainData[y0 * resolution + x1] || 0
+  const h01 = terrainData[y1 * resolution + x0] || 0
+  const h11 = terrainData[y1 * resolution + x1] || 0
+  return (h00 * (1 - tx) + h10 * tx) * (1 - ty) + (h01 * (1 - tx) + h11 * tx) * ty
 }
 
 /* ═══════════════════════════════════════════
@@ -157,28 +145,27 @@ function TerrainMesh({
   terrainData,
   revealProgress,
 }: {
-  terrainData: Float32Array;
-  revealProgress: number;
+  terrainData: Float32Array
+  revealProgress: number
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const resolution = TERRAIN_RESOLUTION;
+  // Casting to 'any' as a pragmatic workaround for R3F intrinsic element type issues in this build environment.
+  const Mesh = 'mesh' as any
+  const Primitive = 'primitive' as any
+
+  const meshRef = useRef<THREE.Mesh>(null)
+  const materialRef = useRef<THREE.ShaderMaterial>(null)
+  const resolution = TERRAIN_RESOLUTION
 
   const geometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(
-      TERRAIN_SIZE,
-      TERRAIN_SIZE,
-      resolution - 1,
-      resolution - 1
-    );
-    const positions = geo.attributes.position.array as Float32Array;
+    const geo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, resolution - 1, resolution - 1)
+    const positions = geo.attributes.position.array as Float32Array
 
     for (let i = 0; i < terrainData.length && i < positions.length / 3; i++) {
-      positions[i * 3 + 2] = terrainData[i] * TERRAIN_ELEVATION_SCALE;
+      positions[i * 3 + 2] = terrainData[i] * TERRAIN_ELEVATION_SCALE
     }
-    geo.computeVertexNormals();
-    return geo;
-  }, [terrainData, resolution]);
+    geo.computeVertexNormals()
+    return geo
+  }, [terrainData, resolution])
 
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
@@ -283,33 +270,33 @@ function TerrainMesh({
       `,
       transparent: true,
       side: THREE.DoubleSide,
-    });
-  }, []);
+    })
+  }, [])
 
   useFrame((state) => {
     if (materialRef.current) {
-      materialRef.current.uniforms.uRevealProgress.value = revealProgress;
-      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
+      materialRef.current.uniforms.uRevealProgress.value = revealProgress
+      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime
 
-      const targetScale = Math.min(revealProgress * 2.5, 1);
+      const targetScale = Math.min(revealProgress * 2.5, 1)
       materialRef.current.uniforms.uElevationScale.value = THREE.MathUtils.lerp(
         materialRef.current.uniforms.uElevationScale.value,
         targetScale,
-        0.04
-      );
+        0.04,
+      )
     }
-  });
+  })
 
   return (
-    <mesh
+    <Mesh
       ref={meshRef}
       geometry={geometry}
       rotation={[-Math.PI / 2, 0, 0]}
       position={[0, TERRAIN_BASE_Y, 0]}
     >
-      <primitive object={shaderMaterial} ref={materialRef} attach="material" />
-    </mesh>
-  );
+      <Primitive object={shaderMaterial} ref={materialRef} attach="material" />
+    </Mesh>
+  )
 }
 
 /* ═══════════════════════════════════════════
@@ -317,7 +304,12 @@ function TerrainMesh({
    ═══════════════════════════════════════════ */
 
 function GridFloor({ revealProgress }: { revealProgress: number }) {
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  // Casting to 'any' as a pragmatic workaround for R3F intrinsic element type issues.
+  const Mesh = 'mesh' as any
+  const PlaneGeometry = 'planeGeometry' as any
+  const Primitive = 'primitive' as any
+
+  const materialRef = useRef<THREE.ShaderMaterial>(null)
 
   const gridMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
@@ -362,22 +354,22 @@ function GridFloor({ revealProgress }: { revealProgress: number }) {
       `,
       transparent: true,
       side: THREE.DoubleSide,
-    });
-  }, []);
+    })
+  }, [])
 
   useFrame((state) => {
     if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
-      materialRef.current.uniforms.uReveal.value = revealProgress;
+      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime
+      materialRef.current.uniforms.uReveal.value = revealProgress
     }
-  });
+  })
 
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.0, 0]}>
-      <planeGeometry args={[40, 40]} />
-      <primitive object={gridMaterial} ref={materialRef} attach="material" />
-    </mesh>
-  );
+    <Mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.0, 0]}>
+      <PlaneGeometry args={[40, 40]} />
+      <Primitive object={gridMaterial} ref={materialRef} attach="material" />
+    </Mesh>
+  )
 }
 
 /* ═══════════════════════════════════════════
@@ -391,51 +383,50 @@ function MemberPin3D({
   isSelected,
   onSelect,
 }: {
-  member: MemberPin;
-  terrainData: Float32Array;
-  revealProgress: number;
-  isSelected: boolean;
-  onSelect: () => void;
+  member: MemberPin
+  terrainData: Float32Array
+  revealProgress: number
+  isSelected: boolean
+  onSelect: () => void
 }) {
-  const groupRef = useRef<THREE.Group>(null);
-  const { x, z } = geoTo3D(member.latitude, member.longitude);
+  const Group = 'group' as any // Cast for R3F compatibility
+  const groupRef = useRef<THREE.Group>(null)
+  const { x, z } = geoTo3D(member.latitude, member.longitude)
 
   useFrame((state) => {
     if (groupRef.current) {
-      const elevScale = Math.min(revealProgress * 2.5, 1);
-      const elev = sampleHeight(terrainData, TERRAIN_RESOLUTION, x, z) * TERRAIN_ELEVATION_SCALE;
-      const surfaceY = TERRAIN_BASE_Y + elev * elevScale;
-      const hover = Math.sin(state.clock.elapsedTime * 2 + x * 3) * 0.05;
-      groupRef.current.position.y = surfaceY + 0.5 + hover;
-      groupRef.current.position.x = x;
-      groupRef.current.position.z = z;
+      const elevScale = Math.min(revealProgress * 2.5, 1)
+      const elev = sampleHeight(terrainData, TERRAIN_RESOLUTION, x, z) * TERRAIN_ELEVATION_SCALE
+      const surfaceY = TERRAIN_BASE_Y + elev * elevScale
+      const hover = Math.sin(state.clock.elapsedTime * 2 + x * 3) * 0.05
+      groupRef.current.position.y = surfaceY + 0.5 + hover
+      groupRef.current.position.x = x
+      groupRef.current.position.z = z
     }
-  });
+  })
 
   const statusDotColor =
-    member.status === "critical"
-      ? "#E8524A"
-      : member.status === "warning"
-        ? "#D4873E"
-        : "#7B8F4E";
+    member.status === 'critical' ? '#E8524A' : member.status === 'warning' ? '#D4873E' : '#7B8F4E'
 
-  if (revealProgress < 0.3) return null;
+  if (revealProgress < 0.3) return null
 
   return (
-    <group ref={groupRef} position={[x, 0, z]}>
-      <Html center distanceFactor={10} style={{ pointerEvents: "auto" }}>
+    <Group ref={groupRef} position={[x, 0, z]}>
+      <Html center distanceFactor={10} style={{ pointerEvents: 'auto' }}>
         <div
           onClick={(e) => {
-            e.stopPropagation();
-            onSelect();
+            e.stopPropagation()
+            onSelect()
           }}
           className="cursor-pointer select-none group"
-          style={{ transform: "translateY(-8px)" }}
+          style={{ transform: 'translateY(-8px)' }}
         >
           {/* Pin body */}
           <div
             className="relative flex flex-col items-center"
-            style={{ filter: isSelected ? `drop-shadow(0 0 12px ${member.avatarColor}80)` : "none" }}
+            style={{
+              filter: isSelected ? `drop-shadow(0 0 12px ${member.avatarColor}80)` : 'none',
+            }}
           >
             {/* Avatar circle */}
             <div
@@ -457,7 +448,7 @@ function MemberPin3D({
               className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full"
               style={{
                 background: statusDotColor,
-                border: "2px solid #0F0705",
+                border: '2px solid #0F0705',
                 boxShadow: `0 0 6px ${statusDotColor}80`,
               }}
             />
@@ -466,12 +457,12 @@ function MemberPin3D({
             <div
               className="mt-1.5 px-2 py-0.5 rounded-md text-[8px] font-medium whitespace-nowrap"
               style={{
-                background: "rgba(15,7,5,0.85)",
-                color: "#FFF1E6",
-                border: "1px solid rgba(232,82,74,0.15)",
-                backdropFilter: "blur(8px)",
+                background: 'rgba(15,7,5,0.85)',
+                color: '#FFF1E6',
+                border: '1px solid rgba(232,82,74,0.15)',
+                backdropFilter: 'blur(8px)',
                 fontFamily: "'DM Sans', sans-serif",
-                letterSpacing: "0.04em",
+                letterSpacing: '0.04em',
               }}
             >
               {member.name}
@@ -481,12 +472,12 @@ function MemberPin3D({
             </div>
 
             {/* Pulse ring for critical */}
-            {member.status === "critical" && (
+            {member.status === 'critical' && (
               <div
                 className="absolute -inset-1 rounded-full animate-ping"
                 style={{
-                  background: "rgba(232,82,74,0.2)",
-                  animationDuration: "2s",
+                  background: 'rgba(232,82,74,0.2)',
+                  animationDuration: '2s',
                 }}
               />
             )}
@@ -501,8 +492,8 @@ function MemberPin3D({
           />
         </div>
       </Html>
-    </group>
-  );
+    </Group>
+  )
 }
 
 /* ═══════════════════════════════════════════
@@ -516,21 +507,26 @@ function GeofenceRing({
   terrainData,
   revealProgress,
 }: {
-  latitude: number;
-  longitude: number;
-  radius: number; // meters -> 3D units
-  terrainData: Float32Array;
-  revealProgress: number;
+  latitude: number
+  longitude: number
+  radius: number // meters -> 3D units
+  terrainData: Float32Array
+  revealProgress: number
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const { x, z } = geoTo3D(latitude, longitude);
+  // Casting to 'any' as a pragmatic workaround for R3F intrinsic element type issues.
+  const Mesh = 'mesh' as any
+  const PlaneGeometry = 'planeGeometry' as any
+  const Primitive = 'primitive' as any
+
+  const meshRef = useRef<THREE.Mesh>(null)
+  const materialRef = useRef<THREE.ShaderMaterial>(null)
+  const { x, z } = geoTo3D(latitude, longitude)
 
   // Convert meter radius to 3D space (rough approximation for this area)
-  const metersPerDegree = 111320;
-  const lngSpan = UGA_BOUNDS.maxLng - UGA_BOUNDS.minLng;
-  const scale3d = TERRAIN_SIZE / (lngSpan * metersPerDegree * Math.cos((latitude * Math.PI) / 180));
-  const r3d = radius * scale3d;
+  const metersPerDegree = 111320
+  const lngSpan = UGA_BOUNDS.maxLng - UGA_BOUNDS.minLng
+  const scale3d = TERRAIN_SIZE / (lngSpan * metersPerDegree * Math.cos((latitude * Math.PI) / 180))
+  const r3d = radius * scale3d
 
   const ringMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
@@ -572,31 +568,27 @@ function GeofenceRing({
       transparent: true,
       side: THREE.DoubleSide,
       depthWrite: false,
-    });
-  }, []);
+    })
+  }, [])
 
   useFrame((state) => {
     if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
-      materialRef.current.uniforms.uReveal.value = Math.max(0, (revealProgress - 0.4) / 0.6);
+      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime
+      materialRef.current.uniforms.uReveal.value = Math.max(0, (revealProgress - 0.4) / 0.6)
     }
     if (meshRef.current) {
-      const elevScale = Math.min(revealProgress * 2.5, 1);
-      const elev = sampleHeight(terrainData, TERRAIN_RESOLUTION, x, z) * TERRAIN_ELEVATION_SCALE;
-      meshRef.current.position.y = TERRAIN_BASE_Y + elev * elevScale + 0.05;
+      const elevScale = Math.min(revealProgress * 2.5, 1)
+      const elev = sampleHeight(terrainData, TERRAIN_RESOLUTION, x, z) * TERRAIN_ELEVATION_SCALE
+      meshRef.current.position.y = TERRAIN_BASE_Y + elev * elevScale + 0.05
     }
-  });
+  })
 
   return (
-    <mesh
-      ref={meshRef}
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[x, TERRAIN_BASE_Y + 0.05, z]}
-    >
-      <planeGeometry args={[r3d * 2, r3d * 2]} />
-      <primitive object={ringMaterial} ref={materialRef} attach="material" />
-    </mesh>
-  );
+    <Mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[x, TERRAIN_BASE_Y + 0.05, z]}>
+      <PlaneGeometry args={[r3d * 2, r3d * 2]} />
+      <Primitive object={ringMaterial} ref={materialRef} attach="material" />
+    </Mesh>
+  )
 }
 
 /* ═══════════════════════════════════════════
@@ -604,77 +596,89 @@ function GeofenceRing({
    ═══════════════════════════════════════════ */
 
 function CameraController({ isEntering }: { isEntering: boolean }) {
-  const { camera } = useThree();
-  const target = useRef(new THREE.Vector3(9, 7, 9));
-  const progress = useRef(0);
-  const animating = useRef(true);
+  const { camera } = useThree()
+  const target = useRef(new THREE.Vector3(9, 7, 9))
+  const progress = useRef(0)
+  const animating = useRef(true)
 
   useEffect(() => {
     if (isEntering) {
-      camera.position.set(18, 14, 18);
-      target.current.set(9, 7, 9);
-      progress.current = 0;
-      animating.current = true;
+      camera.position.set(18, 14, 18)
+      target.current.set(9, 7, 9)
+      progress.current = 0
+      animating.current = true
     }
-  }, [isEntering, camera]);
+  }, [isEntering, camera])
 
   useFrame(() => {
-    if (!animating.current) return;
-    progress.current += 0.012;
+    if (!animating.current) return
+    progress.current += 0.012
     if (progress.current >= 1) {
-      animating.current = false;
-      return;
+      animating.current = false
+      return
     }
-    camera.position.lerp(target.current, 0.025);
-    camera.lookAt(0, -0.3, 0);
-  });
+    camera.position.lerp(target.current, 0.025)
+    camera.lookAt(0, -0.3, 0)
+  })
 
-  return null;
+  return null
 }
 
 /* ═══════════════════════════════════════════
    AMBIENT PARTICLES
    ═══════════════════════════════════════════ */
 
-function AmbientParticles({ count = 60, revealProgress }: { count?: number; revealProgress: number }) {
-  const meshRef = useRef<THREE.Points>(null);
+function AmbientParticles({
+  count = 60,
+  revealProgress,
+}: {
+  count?: number
+  revealProgress: number
+}) {
+  // Casting to 'any' for R3F intrinsic types
+  const Points = 'points' as any
+  const BufferGeometry = 'bufferGeometry' as any
+  const BufferAttribute = 'bufferAttribute' as any
+  const PointsMaterial = 'pointsMaterial' as any
+
+  const meshRef = useRef<THREE.Points>(null)
 
   const { positions, sizes } = useMemo(() => {
-    const pos = new Float32Array(count * 3);
-    const sz = new Float32Array(count);
+    const pos = new Float32Array(count * 3)
+    const sz = new Float32Array(count)
     // Use a simple seeded random for purity
-    let seed = 42;
+    let seed = 42
     const random = () => {
-      const x = Math.sin(seed++) * 10000;
-      return x - Math.floor(x);
-    };
-    for (let i = 0; i < count; i++) {
-      pos[i * 3] = (random() - 0.5) * 16;
-      pos[i * 3 + 1] = random() * 5 - 1;
-      pos[i * 3 + 2] = (random() - 0.5) * 16;
-      sz[i] = random() * 0.03 + 0.01;
+      const x = Math.sin(seed++) * 10000
+      return x - Math.floor(x)
     }
-    return { positions: pos, sizes: sz };
-  }, [count]);
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (random() - 0.5) * 16
+      pos[i * 3 + 1] = random() * 5 - 1
+      pos[i * 3 + 2] = (random() - 0.5) * 16
+      sz[i] = random() * 0.03 + 0.01
+    }
+    return { positions: pos, sizes: sz }
+  }, [count])
 
   useFrame((state) => {
     if (meshRef.current) {
-      const posArr = meshRef.current.geometry.attributes.position.array as Float32Array;
+      const posArr = meshRef.current.geometry.attributes.position.array as Float32Array
       for (let i = 0; i < count; i++) {
-        posArr[i * 3 + 1] += Math.sin(state.clock.elapsedTime * 0.5 + i) * 0.002;
+        posArr[i * 3 + 1] += Math.sin(state.clock.elapsedTime * 0.5 + i) * 0.002
       }
-      meshRef.current.geometry.attributes.position.needsUpdate = true;
-      (meshRef.current.material as THREE.PointsMaterial).opacity = revealProgress * 0.4;
+      meshRef.current.geometry.attributes.position.needsUpdate = true
+      ;(meshRef.current.material as THREE.PointsMaterial).opacity = revealProgress * 0.4
     }
-  });
+  })
 
   return (
-    <points ref={meshRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-size" args={[sizes, 1]} />
-      </bufferGeometry>
-      <pointsMaterial
+    <Points ref={meshRef}>
+      <BufferGeometry>
+        <BufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <BufferAttribute attach="attributes-size" args={[sizes, 1]} />
+      </BufferGeometry>
+      <PointsMaterial
         color="#E8524A"
         size={0.04}
         transparent
@@ -682,8 +686,8 @@ function AmbientParticles({ count = 60, revealProgress }: { count?: number; reve
         sizeAttenuation
         depthWrite={false}
       />
-    </points>
-  );
+    </Points>
+  )
 }
 
 /* ═══════════════════════════════════════════
@@ -694,41 +698,41 @@ function TransitionOverlay({
   isTransitioning,
   onComplete,
 }: {
-  isTransitioning: boolean;
-  onComplete: () => void;
+  isTransitioning: boolean
+  onComplete: () => void
 }) {
-  const [phase, setPhase] = useState<"capture" | "process" | "render">("capture");
-  const [text, setText] = useState("Capturing geospatial data...");
+  const [phase, setPhase] = useState<'capture' | 'process' | 'render'>('capture')
+  const [text, setText] = useState('Capturing geospatial data...')
 
   useEffect(() => {
-    if (!isTransitioning) return;
+    if (!isTransitioning) return
 
     // Use requestAnimationFrame to avoid synchronous setState in effect
     requestAnimationFrame(() => {
-      setPhase("capture");
-      setText("Capturing geospatial data...");
-    });
+      setPhase('capture')
+      setText('Capturing geospatial data...')
+    })
 
     const t1 = setTimeout(() => {
-      setPhase("process");
-      setText("Processing elevation topology...");
-    }, 700);
+      setPhase('process')
+      setText('Processing elevation topology...')
+    }, 700)
     const t2 = setTimeout(() => {
-      setText("Constructing 3D terrain mesh...");
-    }, 1300);
+      setText('Constructing 3D terrain mesh...')
+    }, 1300)
     const t3 = setTimeout(() => {
-      setPhase("render");
-      setText("Rendering topographic view...");
-    }, 1900);
-    const t4 = setTimeout(onComplete, 2400);
+      setPhase('render')
+      setText('Rendering topographic view...')
+    }, 1900)
+    const t4 = setTimeout(onComplete, 2400)
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
-    };
-  }, [isTransitioning, onComplete]);
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
+      clearTimeout(t4)
+    }
+  }, [isTransitioning, onComplete])
 
   return (
     <AnimatePresence>
@@ -739,7 +743,9 @@ function TransitionOverlay({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
           className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden"
-          style={{ background: "radial-gradient(ellipse at center, rgba(15,7,5,0.97), rgba(10,3,2,1))" }}
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(15,7,5,0.97), rgba(10,3,2,1))',
+          }}
         >
           {/* Concentric rings */}
           <div className="absolute inset-0 flex items-center justify-center">
@@ -747,20 +753,20 @@ function TransitionOverlay({
               <motion.div
                 key={i}
                 className="absolute rounded-full"
-                style={{ border: "1px solid rgba(232,82,74,0.15)" }}
+                style={{ border: '1px solid rgba(232,82,74,0.15)' }}
                 initial={{ width: 40, height: 40, opacity: 0 }}
                 animate={{
                   width: [40, 300 + i * 120],
                   height: [40, 300 + i * 120],
                   opacity: [0, 0.3, 0],
                 }}
-                transition={{ duration: 2.5, delay: i * 0.2, repeat: Infinity, ease: "easeOut" }}
+                transition={{ duration: 2.5, delay: i * 0.2, repeat: Infinity, ease: 'easeOut' }}
               />
             ))}
           </div>
 
           {/* Scan lines */}
-          {phase === "process" && (
+          {phase === 'process' && (
             <motion.div
               className="absolute inset-0 overflow-hidden"
               initial={{ opacity: 0 }}
@@ -770,10 +776,13 @@ function TransitionOverlay({
                 <motion.div
                   key={i}
                   className="absolute h-px w-full"
-                  style={{ background: "linear-gradient(90deg, transparent, rgba(232,82,74,0.25), transparent)" }}
+                  style={{
+                    background:
+                      'linear-gradient(90deg, transparent, rgba(232,82,74,0.25), transparent)',
+                  }}
                   initial={{ y: -10 }}
-                  animate={{ y: ["0%", "100%"] }}
-                  transition={{ duration: 1.8, delay: i * 0.12, repeat: Infinity, ease: "linear" }}
+                  animate={{ y: ['0%', '100%'] }}
+                  transition={{ duration: 1.8, delay: i * 0.12, repeat: Infinity, ease: 'linear' }}
                 />
               ))}
             </motion.div>
@@ -790,41 +799,48 @@ function TransitionOverlay({
             <motion.div
               className="relative"
               animate={{ scale: [1, 1.08, 1] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
             >
               <motion.div
                 className="absolute inset-0 rounded-full"
                 style={{
-                  background: "radial-gradient(circle, rgba(232,82,74,0.35) 0%, transparent 65%)",
-                  filter: "blur(16px)",
+                  background: 'radial-gradient(circle, rgba(232,82,74,0.35) 0%, transparent 65%)',
+                  filter: 'blur(16px)',
                 }}
                 animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0.7, 0.4] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
               />
 
               <div
                 className="relative w-20 h-20 rounded-full flex items-center justify-center"
                 style={{
-                  background: "linear-gradient(145deg, rgba(232,82,74,0.15), rgba(232,82,74,0.05))",
-                  border: "1px solid rgba(232,82,74,0.3)",
-                  boxShadow: "0 0 40px rgba(232,82,74,0.15)",
+                  background: 'linear-gradient(145deg, rgba(232,82,74,0.15), rgba(232,82,74,0.05))',
+                  border: '1px solid rgba(232,82,74,0.3)',
+                  boxShadow: '0 0 40px rgba(232,82,74,0.15)',
                 }}
               >
                 <motion.div
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                  transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
                   className="absolute inset-2 rounded-full"
-                  style={{ border: "1px dashed rgba(232,82,74,0.2)" }}
+                  style={{ border: '1px dashed rgba(232,82,74,0.2)' }}
                 />
 
-                {phase === "capture" && <Satellite className="w-8 h-8 text-[#E8524A]" />}
-                {phase === "process" && (
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
+                {phase === 'capture' && <Satellite className="w-8 h-8 text-[#E8524A]" />}
+                {phase === 'process' && (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                  >
                     <Loader2 className="w-8 h-8 text-[#E8524A]" />
                   </motion.div>
                 )}
-                {phase === "render" && (
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12 }}>
+                {phase === 'render' && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', damping: 12 }}
+                  >
                     <Mountain className="w-8 h-8 text-[#E8524A]" />
                   </motion.div>
                 )}
@@ -841,7 +857,7 @@ function TransitionOverlay({
             >
               <h2
                 className="text-base font-bold text-[#FFF1E6]/90 flex items-center gap-2"
-                style={{ fontFamily: "var(--font-garet), sans-serif" }}
+                style={{ fontFamily: 'var(--font-garet), sans-serif' }}
               >
                 <Layers className="w-4 h-4 text-[#E8524A]/70" />
                 Terrain Analysis
@@ -856,15 +872,15 @@ function TransitionOverlay({
 
             {/* Progress dots */}
             <div className="flex gap-2">
-              {(["capture", "process", "render"] as const).map((p, i) => (
+              {(['capture', 'process', 'render'] as const).map((p, i) => (
                 <motion.div
                   key={p}
                   className="w-1.5 h-1.5 rounded-full"
                   style={{
                     background:
-                      ["capture", "process", "render"].indexOf(phase) >= i
-                        ? "#E8524A"
-                        : "rgba(255,241,230,0.15)",
+                      ['capture', 'process', 'render'].indexOf(phase) >= i
+                        ? '#E8524A'
+                        : 'rgba(255,241,230,0.15)',
                   }}
                   animate={{ scale: phase === p ? [1, 1.4, 1] : 1 }}
                   transition={{ duration: 0.5, repeat: phase === p ? Infinity : 0 }}
@@ -874,16 +890,18 @@ function TransitionOverlay({
           </motion.div>
 
           {/* Corner brackets */}
-          {([
-            "top-6 left-6 border-l-2 border-t-2",
-            "top-6 right-6 border-r-2 border-t-2",
-            "bottom-6 left-6 border-l-2 border-b-2",
-            "bottom-6 right-6 border-r-2 border-b-2",
-          ] as const).map((cls, i) => (
+          {(
+            [
+              'top-6 left-6 border-l-2 border-t-2',
+              'top-6 right-6 border-r-2 border-t-2',
+              'bottom-6 left-6 border-l-2 border-b-2',
+              'bottom-6 right-6 border-r-2 border-b-2',
+            ] as const
+          ).map((cls, i) => (
             <motion.div
               key={i}
               className={`absolute w-10 h-10 ${cls}`}
-              style={{ borderColor: "rgba(232,82,74,0.2)" }}
+              style={{ borderColor: 'rgba(232,82,74,0.2)' }}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 + i * 0.08 }}
@@ -892,7 +910,7 @@ function TransitionOverlay({
         </motion.div>
       )}
     </AnimatePresence>
-  );
+  )
 }
 
 /* ═══════════════════════════════════════════
@@ -900,10 +918,10 @@ function TransitionOverlay({
    ═══════════════════════════════════════════ */
 
 interface TerrainView3DProps {
-  members: MemberPin[];
-  selectedMember: string | null;
-  onSelectMember: (id: string | null) => void;
-  savedPlaces?: Array<{ latitude: number; longitude: number; radius: number }>;
+  members: MemberPin[]
+  selectedMember: string | null
+  onSelectMember: (id: string | null) => void
+  savedPlaces?: Array<{ latitude: number; longitude: number; radius: number }>
 }
 
 export default function TerrainView3D({
@@ -912,53 +930,60 @@ export default function TerrainView3D({
   onSelectMember,
   savedPlaces = [],
 }: TerrainView3DProps) {
-  const [mounted, setMounted] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(true);
-  const [sceneReady, setSceneReady] = useState(false);
-  const [revealProgress, setRevealProgress] = useState(0);
-  const [isEntering, setIsEntering] = useState(true);
+  // External casting for Three.js elements to resolve React 19/Next 16 build limitations
+  const Color = 'color' as any
+  const AmbientLight = 'ambientLight' as any
+  const DirectionalLight = 'directionalLight' as any
+  const PointLight = 'pointLight' as any
+  const HemisphereLight = 'hemisphereLight' as any
+  const Fog = 'fog' as any
+  const [mounted, setMounted] = useState(false)
+  const [isTransitioning, setIsTransitioning] = useState(true)
+  const [sceneReady, setSceneReady] = useState(false)
+  const [revealProgress, setRevealProgress] = useState(0)
+  const [isEntering, setIsEntering] = useState(true)
 
   const terrainData = useMemo(
     () => generateRealisticTerrain(TERRAIN_RESOLUTION, TERRAIN_RESOLUTION),
-    []
-  );
+    [],
+  )
 
   useEffect(() => {
     requestAnimationFrame(() => {
-      setMounted(true);
-    });
-  }, []);
+      setMounted(true)
+    })
+  }, [])
 
   const handleTransitionComplete = useCallback(() => {
-    setIsTransitioning(false);
-    setSceneReady(true);
-  }, []);
+    setIsTransitioning(false)
+    setSceneReady(true)
+  }, [])
 
   // Progressive reveal after transition
   useEffect(() => {
-    if (!sceneReady) return;
+    if (!sceneReady) return
 
-    const startTime = Date.now();
-    const duration = 3500;
+    const startTime = Date.now()
+    const duration = 3500
 
     const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const p = Math.min(elapsed / duration, 1);
+      const elapsed = Date.now() - startTime
+      const p = Math.min(elapsed / duration, 1)
       // Ease-out curve
-      const eased = 1 - Math.pow(1 - p, 3);
-      setRevealProgress(eased);
+      const eased = 1 - Math.pow(1 - p, 3)
+      setRevealProgress(eased)
 
       if (p < 1) {
-        requestAnimationFrame(animate);
+        requestAnimationFrame(animate)
       } else {
-        setIsEntering(false);
+        setIsEntering(false)
       }
-    };
+    }
 
-    requestAnimationFrame(animate);
-  }, [sceneReady]);
+    requestAnimationFrame(animate)
+  }, [sceneReady])
 
-  if (!mounted) return null;
+  if (!mounted) return null
 
   return (
     <div className="relative w-full h-full">
@@ -967,28 +992,28 @@ export default function TerrainView3D({
         className="absolute inset-0"
         style={{
           opacity: sceneReady ? 1 : 0,
-          transition: "opacity 0.8s ease",
+          transition: 'opacity 0.8s ease',
         }}
       >
         <Canvas
           gl={{
             antialias: true,
             alpha: true,
-            powerPreference: "high-performance",
+            powerPreference: 'high-performance',
           }}
           dpr={[1, 1.5]}
         >
-          <color attach="background" args={["#0A0302"]} />
+          <Color attach="background" args={['#0A0302']} />
 
           <PerspectiveCamera makeDefault position={[12, 9, 12]} fov={42} />
           <CameraController isEntering={isEntering} />
 
           {/* Lighting: warm ember tones */}
-          <ambientLight intensity={0.15} color="#FFF1E6" />
-          <directionalLight position={[10, 12, 8]} intensity={0.7} color="#FFE0C0" />
-          <pointLight position={[-6, 4, -6]} intensity={0.25} color="#E8524A" />
-          <pointLight position={[6, 3, 6]} intensity={0.15} color="#D4873E" />
-          <hemisphereLight args={["#1A0B08", "#050101", 0.2]} />
+          <AmbientLight intensity={0.15} color="#FFF1E6" />
+          <DirectionalLight position={[10, 12, 8]} intensity={0.7} color="#FFE0C0" />
+          <PointLight position={[-6, 4, -6]} intensity={0.25} color="#E8524A" />
+          <PointLight position={[6, 3, 6]} intensity={0.15} color="#D4873E" />
+          <HemisphereLight args={['#1A0B08', '#050101', 0.2]} />
 
           <TerrainMesh terrainData={terrainData} revealProgress={revealProgress} />
           <GridFloor revealProgress={revealProgress} />
@@ -1002,9 +1027,7 @@ export default function TerrainView3D({
               terrainData={terrainData}
               revealProgress={revealProgress}
               isSelected={selectedMember === member.id}
-              onSelect={() =>
-                onSelectMember(selectedMember === member.id ? null : member.id)
-              }
+              onSelect={() => onSelectMember(selectedMember === member.id ? null : member.id)}
             />
           ))}
 
@@ -1037,16 +1060,12 @@ export default function TerrainView3D({
             panSpeed={0.7}
           />
 
-          {/* Dark fog */}
-          <fog attach="fog" args={["#0A0302", 16, 45]} />
+          <Fog attach="fog" args={['#0A0302', 16, 45]} />
         </Canvas>
       </div>
 
       {/* Transition overlay */}
-      <TransitionOverlay
-        isTransitioning={isTransitioning}
-        onComplete={handleTransitionComplete}
-      />
+      <TransitionOverlay isTransitioning={isTransitioning} onComplete={handleTransitionComplete} />
 
       {/* Legend overlay */}
       <AnimatePresence>
@@ -1061,9 +1080,9 @@ export default function TerrainView3D({
             <div
               className="px-3.5 py-2.5 rounded-xl flex items-center gap-3"
               style={{
-                background: "rgba(15,7,5,0.85)",
-                border: "1px solid rgba(232,82,74,0.12)",
-                backdropFilter: "blur(12px)",
+                background: 'rgba(15,7,5,0.85)',
+                border: '1px solid rgba(232,82,74,0.12)',
+                backdropFilter: 'blur(12px)',
               }}
             >
               <div className="flex items-center gap-1.5">
@@ -1078,14 +1097,20 @@ export default function TerrainView3D({
               <div
                 className="w-20 h-1.5 rounded-full"
                 style={{
-                  background: "linear-gradient(90deg, #0F0201, #380A06, #B81D10, #E8524A, #FF8C45)",
+                  background: 'linear-gradient(90deg, #0F0201, #380A06, #B81D10, #E8524A, #FF8C45)',
                 }}
               />
               <div className="flex items-center gap-3">
-                <span className="text-[8px] text-[#FFF1E6]/30" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+                <span
+                  className="text-[8px] text-[#FFF1E6]/30"
+                  style={{ fontFamily: "'DM Sans', sans-serif" }}
+                >
                   Low
                 </span>
-                <span className="text-[8px] text-[#FFF1E6]/30" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+                <span
+                  className="text-[8px] text-[#FFF1E6]/30"
+                  style={{ fontFamily: "'DM Sans', sans-serif" }}
+                >
                   High
                 </span>
               </div>
@@ -1107,9 +1132,9 @@ export default function TerrainView3D({
             <div
               className="px-3 py-2 rounded-xl flex items-center gap-2"
               style={{
-                background: "rgba(15,7,5,0.85)",
-                border: "1px solid rgba(232,82,74,0.12)",
-                backdropFilter: "blur(12px)",
+                background: 'rgba(15,7,5,0.85)',
+                border: '1px solid rgba(232,82,74,0.12)',
+                backdropFilter: 'blur(12px)',
               }}
             >
               <MapPin size={10} className="text-[#E8524A]/50" />
@@ -1131,5 +1156,5 @@ export default function TerrainView3D({
         )}
       </AnimatePresence>
     </div>
-  );
+  )
 }

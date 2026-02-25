@@ -76,6 +76,7 @@ EXPO_PUBLIC_API_URL=http://<MAC_IP>:8000
 ```
 
 Find your Mac's local IP:
+
 ```bash
 ipconfig getifaddr en0
 ```
@@ -117,14 +118,14 @@ The app maintains a persistent WebSocket connection to the relay server:
 
 ```typescript
 // lib/websocket.ts
-const ws = new WebSocket(process.env.EXPO_PUBLIC_WS_URL!);
+const ws = new WebSocket(process.env.EXPO_PUBLIC_WS_URL!)
 
 ws.onmessage = (event) => {
-  const message = JSON.parse(event.data);
+  const message = JSON.parse(event.data)
   if (message.type === 'episode-start') {
-    showNotificationOverlay(message);
+    showNotificationOverlay(message)
   }
-};
+}
 ```
 
 When an episode starts on the watch, the mobile app receives the event within ~2 seconds and displays a full-screen ring popup.
@@ -239,6 +240,7 @@ npx expo run:android --variant release
 **Issue**: App can't connect to relay server
 
 **Fix**:
+
 1. Verify relay server is running: `python3 apps/relay/relay.py`
 2. Check `EXPO_PUBLIC_WS_URL` in `.env` uses LAN IP (not localhost)
 3. Ensure Mac firewall allows port 8765
@@ -248,6 +250,7 @@ npx expo run:android --variant release
 **Issue**: Camera check-in crashes or doesn't return data
 
 **Fix**:
+
 1. Ensure camera permissions are granted
 2. Check that native module bridge is built: `npx expo prebuild`
 3. Rebuild app: `npx expo run:ios` (not Expo Go, which doesn't support custom native modules)
@@ -257,6 +260,7 @@ npx expo run:android --variant release
 **Issue**: React Native app crashes immediately
 
 **Fix**:
+
 1. Clear Metro cache: `npx expo start -c`
 2. Reinstall dependencies: `rm -rf node_modules && npm install`
 3. Check logs: `npx expo start` and view console errors
@@ -266,6 +270,7 @@ npx expo run:android --variant release
 **Issue**: react-native-maps shows blank screen
 
 **Fix**:
+
 1. iOS: Ensure Xcode is configured with Apple Maps API key (if needed)
 2. Android: Add Google Maps API key to `AndroidManifest.xml`
 3. Fallback: Use web-based map provider instead
@@ -282,6 +287,7 @@ npx expo run:android --variant release
 ### Bundle Size
 
 Current production bundle (estimated):
+
 - **iOS**: ~15 MB (with Hermes)
 - **Android**: ~20 MB (APK) / ~12 MB (AAB)
 

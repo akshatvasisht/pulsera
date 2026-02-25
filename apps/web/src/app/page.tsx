@@ -1,12 +1,12 @@
-"use client";
+'use client'
 
-import { motion } from "motion/react";
-import Link from "next/link";
-import dynamic from "next/dynamic";
-import PulseraWordmark from "@/components/PulseraWordmark";
-import Navbar from "@/components/Navbar";
+import { motion } from 'motion/react'
+import Link from 'next/link'
+import dynamic from 'next/dynamic'
+import PulseraWordmark from '@/components/PulseraWordmark'
+import Navbar from '@/components/Navbar'
 
-const Dither = dynamic(() => import("@/components/Dither"), { ssr: false });
+const Dither = dynamic(() => import('@/components/Dither'), { ssr: false })
 
 /**
  * Landing Page: WARM EMBER
@@ -20,10 +20,6 @@ const Dither = dynamic(() => import("@/components/Dither"), { ssr: false });
 export default function Home() {
   return (
     <>
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap');
-      `}</style>
-
       {/* Dither background — deep crimson/vermillion waves */}
       <Dither
         waveColor={[0.72, 0.11, 0.09]}
@@ -43,7 +39,6 @@ export default function Home() {
         {/* ── Main content — frosted glass midlayer ── */}
         <main className="flex-1 flex items-start px-6 md:px-12 lg:px-20 pt-16 md:pt-24">
           <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10">
-
             {/* Left column — text content with frosted backdrop */}
             <div className="md:col-span-7 flex flex-col justify-center">
               <motion.div
@@ -56,11 +51,13 @@ export default function Home() {
                 <div
                   className="absolute -inset-8 md:-inset-12 rounded-3xl"
                   style={{
-                    background: "linear-gradient(135deg, rgba(20, 8, 6, 0.72) 0%, rgba(35, 12, 10, 0.58) 50%, rgba(20, 8, 6, 0.65) 100%)",
-                    backdropFilter: "blur(32px) saturate(1.4)",
-                    WebkitBackdropFilter: "blur(32px) saturate(1.4)",
-                    border: "1px solid rgba(255, 241, 230, 0.06)",
-                    boxShadow: "0 8px 64px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 241, 230, 0.04)",
+                    background:
+                      'linear-gradient(135deg, rgba(20, 8, 6, 0.72) 0%, rgba(35, 12, 10, 0.58) 50%, rgba(20, 8, 6, 0.65) 100%)',
+                    backdropFilter: 'blur(32px) saturate(1.4)',
+                    WebkitBackdropFilter: 'blur(32px) saturate(1.4)',
+                    border: '1px solid rgba(255, 241, 230, 0.06)',
+                    boxShadow:
+                      '0 8px 64px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 241, 230, 0.04)',
                   }}
                 />
 
@@ -73,7 +70,7 @@ export default function Home() {
                     Wearable Care for Families
                   </p>
                   <h1
-                    style={{ fontFamily: "var(--font-garet)", fontWeight: 400 }}
+                    style={{ fontFamily: 'var(--font-garet)', fontWeight: 400 }}
                     className="text-3xl md:text-5xl lg:text-6xl leading-[1.1] text-[#FFF1E6] mb-8"
                   >
                     Your family circle,
@@ -88,7 +85,9 @@ export default function Home() {
                     style={{ fontFamily: "'DM Sans', sans-serif" }}
                     className="text-lg md:text-xl text-[#FFF1E6]/50 max-w-lg leading-relaxed mb-10"
                   >
-                    Apple Watch vitals cross-checked with iPhone computer vision to build complete health dashboards. When distress is detected, Pulsera intervenes automatically — before it ever reaches a caregiver. Family map and geofencing built in.
+                    Apple Watch vitals cross-checked with iPhone computer vision to build complete
+                    health dashboards. When distress is detected, Pulsera intervenes automatically —
+                    before it ever reaches a caregiver. Family map and geofencing built in.
                   </motion.p>
 
                   <motion.div
@@ -143,15 +142,11 @@ export default function Home() {
           className="flex items-center justify-between px-8 md:px-16 pb-10"
           style={{ fontFamily: "'DM Sans', sans-serif" }}
         >
-          <span className="text-xs tracking-[0.2em] uppercase text-[#FFF1E6]/20">
-            Est. 2026
-          </span>
+          <span className="text-xs tracking-[0.2em] uppercase text-[#FFF1E6]/20">Est. 2026</span>
           <PulseraWordmark size={14} color="#FFF1E6" className="opacity-20" />
-          <span className="text-xs tracking-[0.2em] uppercase text-[#FFF1E6]/20">
-            UGA Hacks
-          </span>
+          <span className="text-xs tracking-[0.2em] uppercase text-[#FFF1E6]/20">UGA Hacks</span>
         </motion.footer>
       </div>
     </>
-  );
+  )
 }

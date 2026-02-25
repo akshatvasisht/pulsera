@@ -4,15 +4,15 @@
 
 ### System Requirements
 
-* **macOS**: 14.0+ (Sonoma or later) — required for watchOS development
-* **Xcode**: 15.0+ with watchOS 10.0+ SDK
-* **Node.js**: 18.0+ (LTS recommended)
-* **Python**: 3.11+
+- **macOS**: 14.0+ (Sonoma or later) — required for watchOS development
+- **Xcode**: 15.0+ with watchOS 10.0+ SDK
+- **Node.js**: 18.0+ (LTS recommended)
+- **Python**: 3.11+
 
 ### Optional
 
-* **Watchman**: For React Native file watching (`brew install watchman`)
-* **Git LFS**: If working with large model checkpoints (`brew install git-lfs`)
+- **Watchman**: For React Native file watching (`brew install watchman`)
+- **Git LFS**: If working with large model checkpoints (`brew install git-lfs`)
 
 ## Setup
 
@@ -56,23 +56,25 @@ Create `.env` files in the appropriate directories.
 #### Backend (`apps/server/.env`)
 
 **Required Variables**
-* `DATABASE_URL`: The connection string for the database.
-* `ELEVENLABS_API_KEY`: API key for ElevenLabs conversational AI.
-* `GEMINI_API_KEY`: API key for Google Gemini health analysis.
-* `SMARTSPECTRA_API_KEY`: API key for contactless vital sign detection.
+
+- `DATABASE_URL`: The connection string for the database.
+- `ELEVENLABS_API_KEY`: API key for ElevenLabs conversational AI.
+- `GEMINI_API_KEY`: API key for Google Gemini health analysis.
+- `SMARTSPECTRA_API_KEY`: API key for contactless vital sign detection.
 
 **Optional Variables**
-* `ALLOWED_ORIGINS`: Comma-separated list of permitted CORS origins. Default: `http://localhost:3000,http://localhost:19006`.
-* `PULSENET_CHECKPOINT_PATH`: Path to the custom PyTorch model checkpoint. Default: `checkpoints/pulsenet_v1.pt`.
-* `ENABLE_COMMUNITY_DETECTION`: Toggle for zone-wide anomaly aggregation. Default: `true`.
-* `DEBUG_MODE`: Enables detailed logging and debug endpoints. Default: `true`.
+
+- `ALLOWED_ORIGINS`: Comma-separated list of permitted CORS origins. Default: `http://localhost:3000,http://localhost:19006`.
+- `PULSENET_CHECKPOINT_PATH`: Path to the custom PyTorch model checkpoint. Default: `checkpoints/pulsenet_v1.pt`.
+- `ENABLE_COMMUNITY_DETECTION`: Toggle for zone-wide anomaly aggregation. Default: `true`.
+- `DEBUG_MODE`: Enables detailed logging and debug endpoints. Default: `true`.
 
 #### Mobile (`apps/mobile/.env`, optional)
 
 **Required Variables**
-* `EXPO_PUBLIC_WS_URL`: WebSocket relay URL (e.g., `ws://<MAC_IP>:8765/ws`).
-* `EXPO_PUBLIC_API_URL`: Backend API URL (e.g., `http://<MAC_IP>:8000`).
 
+- `EXPO_PUBLIC_WS_URL`: WebSocket relay URL (e.g., `ws://<MAC_IP>:8765/ws`).
+- `EXPO_PUBLIC_API_URL`: Backend API URL (e.g., `http://<MAC_IP>:8000`).
 
 Find your Mac's IP address: `ipconfig getifaddr en0`
 
@@ -173,10 +175,10 @@ gunicorn src.server.main:app --workers 4 --worker-class uvicorn.workers.UvicornW
 
 ## Logging
 
-* **Location:** Log files are stored in `apps/server/logs/` and `apps/relay/logs/`.
-* **Configuration:** Log level can be configured via the `DEBUG_MODE` environment variable in the backend.
-* **Real-time Tail:** View backend logs in real-time by running `tail -f apps/server/logs/server.log`.
-* **Rotation Policy:** Logs rotate daily, keeping the last 7 days of historical logs.
+- **Location:** Log files are stored in `apps/server/logs/` and `apps/relay/logs/`.
+- **Configuration:** Log level can be configured via the `DEBUG_MODE` environment variable in the backend.
+- **Real-time Tail:** View backend logs in real-time by running `tail -f apps/server/logs/server.log`.
+- **Rotation Policy:** Logs rotate daily, keeping the last 7 days of historical logs.
 
 ## Troubleshooting
 
@@ -187,12 +189,14 @@ gunicorn src.server.main:app --workers 4 --worker-class uvicorn.workers.UvicornW
 
 **Issue:** Python backend import errors or missing `pip`
 **Fix:** On Debian/Ubuntu, `pip` may be missing from the system Python. Use a virtual environment:
+
 ```bash
 cd apps/server
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 ```
+
 Verify Python version is 3.11+.
 
 ### Runtime Errors

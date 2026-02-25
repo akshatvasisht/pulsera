@@ -5,9 +5,9 @@
  * null the component shows a "---" placeholder.
  */
 
-import React, { useEffect } from "react";
-import { View, Text } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect } from 'react'
+import { View, Text } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -15,53 +15,50 @@ import Animated, {
   withSequence,
   withTiming,
   cancelAnimation,
-} from "react-native-reanimated";
-import { colors } from "@/lib/theme";
+} from 'react-native-reanimated'
+import { colors } from '@/lib/theme'
 
 interface HeartRateDisplayProps {
-  heartRate: number | null;
+  heartRate: number | null
   /** Text size class — "lg" (default) or "sm" */
-  size?: "lg" | "sm";
+  size?: 'lg' | 'sm'
 }
 
-export default function HeartRateDisplay({
-  heartRate,
-  size = "lg",
-}: HeartRateDisplayProps) {
-  const scale = useSharedValue(1);
+export default function HeartRateDisplay({ heartRate, size = 'lg' }: HeartRateDisplayProps) {
+  const scale = useSharedValue(1)
 
   useEffect(() => {
     if (heartRate && heartRate > 0) {
       // Pulse interval derived from heart rate
-      const intervalMs = Math.max(400, Math.min(1200, 60000 / heartRate));
-      const beatDuration = intervalMs * 0.3;
+      const intervalMs = Math.max(400, Math.min(1200, 60000 / heartRate))
+      const beatDuration = intervalMs * 0.3
 
       scale.value = withRepeat(
         withSequence(
           withTiming(1.25, { duration: beatDuration }),
-          withTiming(1, { duration: beatDuration })
+          withTiming(1, { duration: beatDuration }),
         ),
         -1, // infinite
-        false
-      );
+        false,
+      )
     } else {
-      cancelAnimation(scale);
-      scale.value = 1;
+      cancelAnimation(scale)
+      scale.value = 1
     }
 
     return () => {
-      cancelAnimation(scale);
-    };
-  }, [heartRate, scale]);
+      cancelAnimation(scale)
+    }
+  }, [heartRate, scale])
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-  }));
+  }))
 
-  const isLarge = size === "lg";
-  const iconSize = isLarge ? 28 : 18;
-  const numberSize = isLarge ? 40 : 24;
-  const bpmSize = isLarge ? 14 : 11;
+  const isLarge = size === 'lg'
+  const iconSize = isLarge ? 28 : 18
+  const numberSize = isLarge ? 40 : 24
+  const bpmSize = isLarge ? 14 : 11
 
   return (
     <View className="flex-row items-center" style={{ gap: isLarge ? 8 : 4 }}>
@@ -72,12 +69,12 @@ export default function HeartRateDisplay({
         <Text
           style={{
             fontSize: numberSize,
-            fontWeight: "800",
+            fontWeight: '800',
             color: colors.text,
             lineHeight: numberSize * 1.1,
           }}
         >
-          {heartRate != null ? Math.round(heartRate) : "---"}
+          {heartRate != null ? Math.round(heartRate) : '---'}
         </Text>
         <Text
           style={{
@@ -90,5 +87,5 @@ export default function HeartRateDisplay({
         </Text>
       </View>
     </View>
-  );
+  )
 }

@@ -1,11 +1,11 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import dynamic from "next/dynamic";
-import { motion, AnimatePresence } from "motion/react";
-import PulseraLogo from "@/components/PulseraLogo";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import dynamic from 'next/dynamic'
+import { motion, AnimatePresence } from 'motion/react'
+import PulseraLogo from '@/components/PulseraLogo'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Shield,
   Watch,
@@ -30,102 +30,102 @@ import {
   Eye,
   Box,
   Map as MapIcon,
-} from "lucide-react";
+} from 'lucide-react'
 
-const MapScreen = dynamic(() => import("@/components/MapScreen"), { ssr: false });
-const TerrainView3D = dynamic(() => import("@/components/TerrainView3D"), { ssr: false });
-import { FAMILY_MEMBERS, SAVED_PLACES, type FamilyMember } from "@/lib/simulatedData";
+const MapScreen = dynamic(() => import('@/components/MapScreen'), { ssr: false })
+const TerrainView3D = dynamic(() => import('@/components/TerrainView3D'), { ssr: false })
+import { FAMILY_MEMBERS, SAVED_PLACES, type FamilyMember } from '@/lib/simulatedData'
 
 /* ═══════════════════════════════════════════
    MOCK DATA & TYPES
    ═══════════════════════════════════════════ */
 
-const ease = [0.16, 1, 0.3, 1] as const;
+const ease = [0.16, 1, 0.3, 1] as const
 
 const deviceEvents = [
   {
-    id: "e1",
-    icon: "battery" as const,
-    priority: "high" as const,
-    title: "Low Battery",
-    memberName: "Diego",
-    memberAvatar: "DG",
-    memberColor: "#f59e0b",
-    detail: "Battery at 31% -- charge soon",
-    timestamp: "2m ago",
+    id: 'e1',
+    icon: 'battery' as const,
+    priority: 'high' as const,
+    title: 'Low Battery',
+    memberName: 'Diego',
+    memberAvatar: 'DG',
+    memberColor: '#f59e0b',
+    detail: 'Battery at 31% -- charge soon',
+    timestamp: '2m ago',
   },
   {
-    id: "e2",
-    icon: "sync" as const,
-    priority: "low" as const,
-    title: "Sync Complete",
-    memberName: "Carlos",
-    memberAvatar: "CG",
-    memberColor: "#0ea5e9",
-    detail: "Health report uploaded",
-    timestamp: "25m ago",
+    id: 'e2',
+    icon: 'sync' as const,
+    priority: 'low' as const,
+    title: 'Sync Complete',
+    memberName: 'Carlos',
+    memberAvatar: 'CG',
+    memberColor: '#0ea5e9',
+    detail: 'Health report uploaded',
+    timestamp: '25m ago',
   },
   {
-    id: "e3",
-    icon: "wifi" as const,
-    priority: "medium" as const,
-    title: "Weak Signal",
-    memberName: "Sofia",
-    memberAvatar: "SG",
-    memberColor: "#22c55e",
-    detail: "Connection intermittent",
-    timestamp: "40m ago",
+    id: 'e3',
+    icon: 'wifi' as const,
+    priority: 'medium' as const,
+    title: 'Weak Signal',
+    memberName: 'Sofia',
+    memberAvatar: 'SG',
+    memberColor: '#22c55e',
+    detail: 'Connection intermittent',
+    timestamp: '40m ago',
   },
   {
-    id: "e4",
-    icon: "sync" as const,
-    priority: "low" as const,
-    title: "Sync Complete",
-    memberName: "Maria",
-    memberAvatar: "MG",
-    memberColor: "#ec4899",
-    detail: "Vitals updated",
-    timestamp: "1h ago",
+    id: 'e4',
+    icon: 'sync' as const,
+    priority: 'low' as const,
+    title: 'Sync Complete',
+    memberName: 'Maria',
+    memberAvatar: 'MG',
+    memberColor: '#ec4899',
+    detail: 'Vitals updated',
+    timestamp: '1h ago',
   },
-];
+]
 
 const panicEvents = [
   {
-    id: "p1",
-    severity: "critical" as const,
-    type: "fall" as const,
-    title: "Hard Fall Detected",
+    id: 'p1',
+    severity: 'critical' as const,
+    type: 'fall' as const,
+    title: 'Hard Fall Detected',
     resolved: false,
-    avatar: "MG",
-    avatarColor: "#ec4899",
-    memberName: "Maria",
-    location: "Home",
-    timestamp: "2m ago",
-    detail: "Accelerometer detected sudden impact followed by lack of movement for 30 seconds.",
+    avatar: 'MG',
+    avatarColor: '#ec4899',
+    memberName: 'Maria',
+    location: 'Home',
+    timestamp: '2m ago',
+    detail: 'Accelerometer detected sudden impact followed by lack of movement for 30 seconds.',
     metrics: [
-      { label: "Impact Force", value: "4.2g" },
-      { label: "Heart Rate", value: "68 bpm" },
-      { label: "Immobile", value: "30s" },
+      { label: 'Impact Force', value: '4.2g' },
+      { label: 'Heart Rate', value: '68 bpm' },
+      { label: 'Immobile', value: '30s' },
     ],
   },
   {
-    id: "p2",
-    severity: "medium" as const,
-    type: "hr" as const,
-    title: "High Heart Rate",
+    id: 'p2',
+    severity: 'medium' as const,
+    type: 'hr' as const,
+    title: 'High Heart Rate',
     resolved: true,
-    avatar: "CG",
-    avatarColor: "#0ea5e9",
-    memberName: "Carlos",
-    location: "Ramsey Center",
-    timestamp: "Yesterday",
-    detail: "Heart rate exceeded threshold (120bpm) while stationary for over 5 minutes.",
+    avatar: 'CG',
+    avatarColor: '#0ea5e9',
+    memberName: 'Carlos',
+    location: 'Ramsey Center',
+    timestamp: 'Yesterday',
+    detail: 'Heart rate exceeded threshold (120bpm) while stationary for over 5 minutes.',
     metrics: [
-      { label: "Peak HR", value: "142 bpm" },
-      { label: "Duration", value: "5m 12s" },
+      { label: 'Peak HR', value: '142 bpm' },
+      { label: 'Duration', value: '5m 12s' },
     ],
   },
-];
+]
 
 /* ═══════════════════════════════════════════
    HELPERS
@@ -133,76 +133,141 @@ const panicEvents = [
 
 const statusColor = (status: string) => {
   switch (status) {
-    case "critical":
-      return { bg: "rgba(232,82,74,0.2)", text: "#E8524A", dot: "#E8524A", glow: "rgba(232,82,74,0.4)" };
-    case "warning":
-    case "elevated":
-      return { bg: "rgba(212,135,62,0.2)", text: "#D4873E", dot: "#D4873E", glow: "rgba(212,135,62,0.4)" };
-    case "safe":
+    case 'critical':
+      return {
+        bg: 'rgba(232,82,74,0.2)',
+        text: '#E8524A',
+        dot: '#E8524A',
+        glow: 'rgba(232,82,74,0.4)',
+      }
+    case 'warning':
+    case 'elevated':
+      return {
+        bg: 'rgba(212,135,62,0.2)',
+        text: '#D4873E',
+        dot: '#D4873E',
+        glow: 'rgba(212,135,62,0.4)',
+      }
+    case 'safe':
     default:
-      return { bg: "rgba(123,143,78,0.2)", text: "#7B8F4E", dot: "#7B8F4E", glow: "rgba(123,143,78,0.4)" };
+      return {
+        bg: 'rgba(123,143,78,0.2)',
+        text: '#7B8F4E',
+        dot: '#7B8F4E',
+        glow: 'rgba(123,143,78,0.4)',
+      }
   }
-};
+}
 
 const formatStatus = (status: string): string => {
-  if (!status) return status;
-  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-};
+  if (!status) return status
+  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
+}
 
 const eventPriorityColor = (priority: string) => {
   switch (priority) {
-    case "high": return "#E8524A";
-    case "medium": return "#D4873E";
-    default: return "#7B8F4E";
+    case 'high':
+      return '#E8524A'
+    case 'medium':
+      return '#D4873E'
+    default:
+      return '#7B8F4E'
   }
-};
+}
 
-const eventIconMap: Record<string, React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>> = {
+const eventIconMap: Record<
+  string,
+  React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>
+> = {
   battery: Battery,
   sync: RefreshCw,
   wifi: Wifi,
   default: Zap,
-};
+}
 
 const panicSeverityStyle = (severity: string) => {
   switch (severity) {
-    case "critical":
-      return { bg: "rgba(232,82,74,0.06)", border: "rgba(232,82,74,0.2)", badge: "#E8524A", badgeBg: "rgba(232,82,74,0.15)", pulse: true };
-    case "medium":
-      return { bg: "rgba(212,135,62,0.04)", border: "rgba(212,135,62,0.12)", badge: "#D4873E", badgeBg: "rgba(212,135,62,0.12)", pulse: false };
+    case 'critical':
+      return {
+        bg: 'rgba(232,82,74,0.06)',
+        border: 'rgba(232,82,74,0.2)',
+        badge: '#E8524A',
+        badgeBg: 'rgba(232,82,74,0.15)',
+        pulse: true,
+      }
+    case 'medium':
+      return {
+        bg: 'rgba(212,135,62,0.04)',
+        border: 'rgba(212,135,62,0.12)',
+        badge: '#D4873E',
+        badgeBg: 'rgba(212,135,62,0.12)',
+        pulse: false,
+      }
     default:
-      return { bg: "rgba(255,241,230,0.02)", border: "rgba(255,241,230,0.05)", badge: "#FFF1E6", badgeBg: "rgba(255,241,230,0.05)", pulse: false };
+      return {
+        bg: 'rgba(255,241,230,0.02)',
+        border: 'rgba(255,241,230,0.05)',
+        badge: '#FFF1E6',
+        badgeBg: 'rgba(255,241,230,0.05)',
+        pulse: false,
+      }
   }
-};
+}
 
 const panicTypeIcon = (type: string) => {
   switch (type) {
-    case "fall": return Activity;
-    case "hr": return Heart;
-    case "sos": return AlertTriangle;
-    default: return AlertTriangle;
+    case 'fall':
+      return Activity
+    case 'hr':
+      return Heart
+    case 'sos':
+      return AlertTriangle
+    default:
+      return AlertTriangle
   }
-};
+}
 
 /* ═══════════════════════════════════════════
    MEMBER DETAIL PANEL
    ═══════════════════════════════════════════ */
 
-function MemberDetailPanel({
-  member,
-  onClose,
-}: {
-  member: FamilyMember;
-  onClose: () => void;
-}) {
-  const sc = statusColor(member.status);
+function MemberDetailPanel({ member, onClose }: { member: FamilyMember; onClose: () => void }) {
+  const sc = statusColor(member.status)
 
   const vitals = [
-    { icon: Heart, label: "Heart Rate", value: `${member.heartRate}`, unit: "bpm", alert: member.heartRate > 100, color: "#E8524A" },
-    { icon: Droplets, label: "Blood Oxygen", value: `${member.bloodOxygen}`, unit: "%", alert: member.bloodOxygen < 94, color: "#5B9BD5" },
-    { icon: Thermometer, label: "Temperature", value: `${member.temperature}`, unit: "\u00B0F", alert: member.temperature > 99.5, color: "#D4873E" },
-    { icon: Footprints, label: "Steps", value: member.steps >= 1000 ? `${(member.steps / 1000).toFixed(1)}k` : `${member.steps}`, unit: "today", alert: false, color: "#7B8F4E" },
-  ];
+    {
+      icon: Heart,
+      label: 'Heart Rate',
+      value: `${member.heartRate}`,
+      unit: 'bpm',
+      alert: member.heartRate > 100,
+      color: '#E8524A',
+    },
+    {
+      icon: Droplets,
+      label: 'Blood Oxygen',
+      value: `${member.bloodOxygen}`,
+      unit: '%',
+      alert: member.bloodOxygen < 94,
+      color: '#5B9BD5',
+    },
+    {
+      icon: Thermometer,
+      label: 'Temperature',
+      value: `${member.temperature}`,
+      unit: '\u00B0F',
+      alert: member.temperature > 99.5,
+      color: '#D4873E',
+    },
+    {
+      icon: Footprints,
+      label: 'Steps',
+      value: member.steps >= 1000 ? `${(member.steps / 1000).toFixed(1)}k` : `${member.steps}`,
+      unit: 'today',
+      alert: false,
+      color: '#7B8F4E',
+    },
+  ]
 
   return (
     <motion.div
@@ -230,13 +295,16 @@ function MemberDetailPanel({
               </div>
               <div
                 className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(12,6,4,0.9)", border: `2px solid ${sc.dot}` }}
+                style={{ background: 'rgba(12,6,4,0.9)', border: `2px solid ${sc.dot}` }}
               >
                 <div className="w-1.5 h-1.5 rounded-full" style={{ background: sc.dot }} />
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#FFF1E6]/95" style={{ fontFamily: "var(--font-garet), 'Playfair Display', serif" }}>
+              <h3
+                className="text-sm font-bold text-[#FFF1E6]/95"
+                style={{ fontFamily: "var(--font-garet), 'Playfair Display', serif" }}
+              >
                 {member.name}
               </h3>
               <div className="flex items-center gap-2 mt-0.5">
@@ -253,7 +321,7 @@ function MemberDetailPanel({
           <button
             onClick={onClose}
             className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-[#FFF1E6]/10"
-            style={{ background: "rgba(255,241,230,0.05)" }}
+            style={{ background: 'rgba(255,241,230,0.05)' }}
           >
             <X size={12} className="text-[#FFF1E6]/50" />
           </button>
@@ -263,7 +331,10 @@ function MemberDetailPanel({
         <div className="flex items-center gap-3 mb-1">
           <div
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px]"
-            style={{ background: "rgba(255,241,230,0.04)", border: "1px solid rgba(255,241,230,0.06)" }}
+            style={{
+              background: 'rgba(255,241,230,0.04)',
+              border: '1px solid rgba(255,241,230,0.06)',
+            }}
           >
             <MapPin size={10} className="text-[#FFF1E6]/40" />
             <span className="text-[#FFF1E6]/70">{member.location}</span>
@@ -274,7 +345,10 @@ function MemberDetailPanel({
         <div className="flex items-center gap-3">
           <div
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px]"
-            style={{ background: "rgba(255,241,230,0.04)", border: "1px solid rgba(255,241,230,0.06)" }}
+            style={{
+              background: 'rgba(255,241,230,0.04)',
+              border: '1px solid rgba(255,241,230,0.06)',
+            }}
           >
             <Watch size={10} className="text-[#FFF1E6]/40" />
             <span className="text-[#FFF1E6]/70">{member.device}</span>
@@ -282,16 +356,24 @@ function MemberDetailPanel({
           <div
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px]"
             style={{
-              background: member.battery < 20 ? "rgba(232,82,74,0.08)" : "rgba(255,241,230,0.04)",
-              border: `1px solid ${member.battery < 20 ? "rgba(232,82,74,0.15)" : "rgba(255,241,230,0.06)"}`,
+              background: member.battery < 20 ? 'rgba(232,82,74,0.08)' : 'rgba(255,241,230,0.04)',
+              border: `1px solid ${member.battery < 20 ? 'rgba(232,82,74,0.15)' : 'rgba(255,241,230,0.06)'}`,
             }}
           >
-            <Battery size={10} style={{ color: member.battery < 20 ? "#E8524A" : "rgba(255,241,230,0.4)" }} />
-            <span style={{ color: member.battery < 20 ? "#E8524A" : "rgba(255,241,230,0.7)" }}>{member.battery}%</span>
+            <Battery
+              size={10}
+              style={{ color: member.battery < 20 ? '#E8524A' : 'rgba(255,241,230,0.4)' }}
+            />
+            <span style={{ color: member.battery < 20 ? '#E8524A' : 'rgba(255,241,230,0.7)' }}>
+              {member.battery}%
+            </span>
           </div>
           <div
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px]"
-            style={{ background: "rgba(255,241,230,0.04)", border: "1px solid rgba(255,241,230,0.06)" }}
+            style={{
+              background: 'rgba(255,241,230,0.04)',
+              border: '1px solid rgba(255,241,230,0.06)',
+            }}
           >
             <Clock size={10} className="text-[#FFF1E6]/40" />
             <span className="text-[#FFF1E6]/50">{member.lastSync}</span>
@@ -300,42 +382,57 @@ function MemberDetailPanel({
       </div>
 
       {/* Divider */}
-      <div className="mx-5 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(255,241,230,0.08), transparent)" }} />
+      <div
+        className="mx-5 h-px"
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(255,241,230,0.08), transparent)',
+        }}
+      />
 
       {/* Vitals Grid */}
       <div className="p-5 flex-1">
-        <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-[#FFF1E6]/30 mb-3" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+        <p
+          className="text-[9px] font-medium tracking-[0.2em] uppercase text-[#FFF1E6]/30 mb-3"
+          style={{ fontFamily: "'DM Sans', sans-serif" }}
+        >
           Live Vitals
         </p>
         <div className="grid grid-cols-2 gap-2.5">
           {vitals.map((vital) => {
-            const Icon = vital.icon;
+            const Icon = vital.icon
             return (
               <div
                 key={vital.label}
                 className="rounded-xl p-3 relative overflow-hidden transition-all duration-300 hover:scale-[1.02]"
                 style={{
-                  background: vital.alert ? `linear-gradient(135deg, ${vital.color}08, ${vital.color}04)` : "rgba(255,241,230,0.03)",
-                  border: `1px solid ${vital.alert ? `${vital.color}25` : "rgba(255,241,230,0.05)"}`,
+                  background: vital.alert
+                    ? `linear-gradient(135deg, ${vital.color}08, ${vital.color}04)`
+                    : 'rgba(255,241,230,0.03)',
+                  border: `1px solid ${vital.alert ? `${vital.color}25` : 'rgba(255,241,230,0.05)'}`,
                 }}
               >
                 <div className="flex items-center gap-1.5 mb-2">
                   <Icon
                     size={12}
                     style={{
-                      color: vital.alert ? vital.color : "rgba(255,241,230,0.3)",
-                      animation: vital.label === "Heart Rate" && vital.alert ? "heartbeat 1.5s infinite" : "none",
+                      color: vital.alert ? vital.color : 'rgba(255,241,230,0.3)',
+                      animation:
+                        vital.label === 'Heart Rate' && vital.alert
+                          ? 'heartbeat 1.5s infinite'
+                          : 'none',
                     }}
                   />
-                  <span className="text-[9px] text-[#FFF1E6]/40 uppercase tracking-wider">{vital.label}</span>
+                  <span className="text-[9px] text-[#FFF1E6]/40 uppercase tracking-wider">
+                    {vital.label}
+                  </span>
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span
                     className="text-xl font-bold"
                     style={{
-                      color: vital.alert ? vital.color : "#FFF1E6",
+                      color: vital.alert ? vital.color : '#FFF1E6',
                       opacity: vital.alert ? 1 : 0.85,
-                      fontFamily: "var(--font-garet), sans-serif",
+                      fontFamily: 'var(--font-garet), sans-serif',
                     }}
                   >
                     {vital.value}
@@ -343,7 +440,7 @@ function MemberDetailPanel({
                   <span className="text-[9px] text-[#FFF1E6]/35">{vital.unit}</span>
                 </div>
               </div>
-            );
+            )
           })}
         </div>
 
@@ -354,7 +451,7 @@ function MemberDetailPanel({
             style={{
               background: `linear-gradient(135deg, ${member.avatarColor}30, ${member.avatarColor}15)`,
               border: `1px solid ${member.avatarColor}35`,
-              color: "#FFF1E6",
+              color: '#FFF1E6',
             }}
           >
             <Phone size={12} />
@@ -363,9 +460,9 @@ function MemberDetailPanel({
           <button
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-medium transition-all duration-300 hover:scale-[1.02]"
             style={{
-              background: "rgba(255,241,230,0.05)",
-              border: "1px solid rgba(255,241,230,0.08)",
-              color: "#FFF1E6",
+              background: 'rgba(255,241,230,0.05)',
+              border: '1px solid rgba(255,241,230,0.08)',
+              color: '#FFF1E6',
             }}
           >
             <MessageCircle size={12} />
@@ -374,9 +471,9 @@ function MemberDetailPanel({
           <button
             className="flex items-center justify-center w-10 py-2.5 rounded-xl text-[11px] font-medium transition-all duration-300 hover:scale-[1.02]"
             style={{
-              background: "rgba(255,241,230,0.05)",
-              border: "1px solid rgba(255,241,230,0.08)",
-              color: "#FFF1E6",
+              background: 'rgba(255,241,230,0.05)',
+              border: '1px solid rgba(255,241,230,0.08)',
+              color: '#FFF1E6',
             }}
           >
             <Navigation size={12} />
@@ -384,7 +481,7 @@ function MemberDetailPanel({
         </div>
       </div>
     </motion.div>
-  );
+  )
 }
 
 /* ═══════════════════════════════════════════
@@ -392,32 +489,32 @@ function MemberDetailPanel({
    ═══════════════════════════════════════════ */
 
 export default function Dashboard() {
-  const [selectedMember, setSelectedMember] = useState<string | null>(null);
-  const [expandedPanic, setExpandedPanic] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState("");
-  const [activeTab, setActiveTab] = useState<"map" | "alerts">("map");
-  const [viewMode, setViewMode] = useState<"map" | "3d">("map");
+  const [selectedMember, setSelectedMember] = useState<string | null>(null)
+  const [expandedPanic, setExpandedPanic] = useState<string | null>(null)
+  const [currentTime, setCurrentTime] = useState('')
+  const [activeTab, setActiveTab] = useState<'map' | 'alerts'>('map')
+  const [viewMode, setViewMode] = useState<'map' | '3d'>('map')
 
   useEffect(() => {
     const updateTime = () => {
-      const now = new Date();
+      const now = new Date()
       setCurrentTime(
-        now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
-      );
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+        now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+      )
+    }
+    updateTime()
+    const interval = setInterval(updateTime, 1000)
+    return () => clearInterval(interval)
+  }, [])
 
-  const selectedMemberData = FAMILY_MEMBERS.find((m) => m.id === selectedMember);
-  const activeAlerts = panicEvents.filter((e) => !e.resolved);
+  const selectedMemberData = FAMILY_MEMBERS.find((m) => m.id === selectedMember)
+  const activeAlerts = panicEvents.filter((e) => !e.resolved)
 
   return (
     <div
       className="h-screen flex flex-col relative overflow-hidden"
       style={{
-        background: "linear-gradient(145deg, #0F0705 0%, #1A0B08 40%, #140806 100%)",
+        background: 'linear-gradient(145deg, #0F0705 0%, #1A0B08 40%, #140806 100%)',
       }}
     >
       {/* Noise texture overlay */}
@@ -431,11 +528,14 @@ export default function Dashboard() {
       {/* Ambient background blurs */}
       <div
         className="absolute top-[-20%] left-[-10%] w-[50%] h-[60%] rounded-full animate-glow-pulse pointer-events-none"
-        style={{ background: "radial-gradient(ellipse, rgba(232,82,74,0.04) 0%, transparent 70%)" }}
+        style={{ background: 'radial-gradient(ellipse, rgba(232,82,74,0.04) 0%, transparent 70%)' }}
       />
       <div
         className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[50%] rounded-full animate-glow-pulse pointer-events-none"
-        style={{ background: "radial-gradient(ellipse, rgba(123,143,78,0.03) 0%, transparent 70%)", animationDelay: "3s" }}
+        style={{
+          background: 'radial-gradient(ellipse, rgba(123,143,78,0.03) 0%, transparent 70%)',
+          animationDelay: '3s',
+        }}
       />
 
       {/* ── TOP HEADER BAR ── */}
@@ -458,13 +558,13 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <h1
                 className="text-sm font-bold text-[#FFF1E6]/90 tracking-tight"
-                style={{ fontFamily: "var(--font-garet), sans-serif" }}
+                style={{ fontFamily: 'var(--font-garet), sans-serif' }}
               >
                 Ring Dashboard
               </h1>
               <span
                 className="text-[8px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-full"
-                style={{ background: "rgba(123,143,78,0.15)", color: "#7B8F4E" }}
+                style={{ background: 'rgba(123,143,78,0.15)', color: '#7B8F4E' }}
               >
                 Live
               </span>
@@ -476,7 +576,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-3">
             {FAMILY_MEMBERS.map((m) => {
-              const sc = statusColor(m.status);
+              const sc = statusColor(m.status)
               return (
                 <button
                   key={m.id}
@@ -489,8 +589,11 @@ export default function Dashboard() {
                     style={{
                       background: `linear-gradient(135deg, ${m.avatarColor}20, ${m.avatarColor}40)`,
                       color: m.avatarColor,
-                      border: selectedMember === m.id ? `2px solid ${m.avatarColor}` : `1px solid ${m.avatarColor}30`,
-                      boxShadow: selectedMember === m.id ? `0 0 12px ${m.avatarColor}30` : "none",
+                      border:
+                        selectedMember === m.id
+                          ? `2px solid ${m.avatarColor}`
+                          : `1px solid ${m.avatarColor}30`,
+                      boxShadow: selectedMember === m.id ? `0 0 12px ${m.avatarColor}30` : 'none',
                     }}
                   >
                     {m.avatar}
@@ -499,18 +602,21 @@ export default function Dashboard() {
                     className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
                     style={{
                       background: sc.dot,
-                      border: "1.5px solid #0F0705",
-                      boxShadow: m.status === "critical" ? `0 0 6px ${sc.dot}` : "none",
+                      border: '1.5px solid #0F0705',
+                      boxShadow: m.status === 'critical' ? `0 0 6px ${sc.dot}` : 'none',
                     }}
                   />
                 </button>
-              );
+              )
             })}
           </div>
           <div className="h-5 w-px bg-[#FFF1E6]/08 hidden md:block" />
           <div className="flex items-center gap-2">
             <Signal size={12} className="text-[#7B8F4E]/60" />
-            <span className="text-[10px] text-[#FFF1E6]/30" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            <span
+              className="text-[10px] text-[#FFF1E6]/30"
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+            >
               {currentTime}
             </span>
           </div>
@@ -518,18 +624,16 @@ export default function Dashboard() {
           {/* Alert badge */}
           {activeAlerts.length > 0 && (
             <button
-              onClick={() => setActiveTab("alerts")}
+              onClick={() => setActiveTab('alerts')}
               className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all duration-300 hover:scale-105"
               style={{
-                background: "rgba(232,82,74,0.15)",
-                border: "1px solid rgba(232,82,74,0.25)",
+                background: 'rgba(232,82,74,0.15)',
+                border: '1px solid rgba(232,82,74,0.25)',
               }}
             >
               <AlertTriangle size={11} className="text-[#E8524A]" />
               <span className="text-[10px] font-bold text-[#E8524A]">{activeAlerts.length}</span>
-              <div
-                className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#E8524A] animate-ping-slow"
-              />
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#E8524A] animate-ping-slow" />
             </button>
           )}
         </div>
@@ -550,9 +654,10 @@ export default function Dashboard() {
           <div
             className="rounded-2xl overflow-hidden flex-1 flex flex-col"
             style={{
-              background: "linear-gradient(180deg, rgba(255,241,230,0.05) 0%, rgba(255,241,230,0.02) 100%)",
-              border: "1px solid rgba(255,241,230,0.06)",
-              boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
+              background:
+                'linear-gradient(180deg, rgba(255,241,230,0.05) 0%, rgba(255,241,230,0.02) 100%)',
+              border: '1px solid rgba(255,241,230,0.06)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
             }}
           >
             <div className="p-4 pb-3 flex items-center justify-between flex-shrink-0">
@@ -566,15 +671,16 @@ export default function Dashboard() {
                 </h2>
               </div>
               <span className="text-[9px] text-[#FFF1E6]/30">
-                {FAMILY_MEMBERS.filter((m) => m.status === "safe").length}/{FAMILY_MEMBERS.length} Safe
+                {FAMILY_MEMBERS.filter((m) => m.status === 'safe').length}/{FAMILY_MEMBERS.length}{' '}
+                Safe
               </span>
             </div>
 
             <ScrollArea className="flex-1">
               <div className="px-3 pb-3 space-y-1.5">
                 {FAMILY_MEMBERS.map((member, i) => {
-                  const sc = statusColor(member.status);
-                  const isSelected = selectedMember === member.id;
+                  const sc = statusColor(member.status)
+                  const isSelected = selectedMember === member.id
                   return (
                     <motion.div
                       key={member.id}
@@ -587,8 +693,10 @@ export default function Dashboard() {
                       <div
                         className="rounded-xl p-3 transition-all duration-300"
                         style={{
-                          background: isSelected ? "rgba(255,241,230,0.08)" : "rgba(255,241,230,0.02)",
-                          border: `1px solid ${isSelected ? "rgba(255,241,230,0.1)" : "transparent"}`,
+                          background: isSelected
+                            ? 'rgba(255,241,230,0.08)'
+                            : 'rgba(255,241,230,0.02)',
+                          border: `1px solid ${isSelected ? 'rgba(255,241,230,0.1)' : 'transparent'}`,
                         }}
                       >
                         <div className="flex items-center gap-3">
@@ -606,9 +714,12 @@ export default function Dashboard() {
                             </div>
                             <div
                               className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full flex items-center justify-center"
-                              style={{ background: "#0F0705", border: `1.5px solid ${sc.dot}` }}
+                              style={{ background: '#0F0705', border: `1.5px solid ${sc.dot}` }}
                             >
-                              <div className="w-1.5 h-1.5 rounded-full" style={{ background: sc.dot }} />
+                              <div
+                                className="w-1.5 h-1.5 rounded-full"
+                                style={{ background: sc.dot }}
+                              />
                             </div>
                           </div>
 
@@ -621,9 +732,13 @@ export default function Dashboard() {
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <MapPin size={8} className="text-[#FFF1E6]/30" />
-                              <span className="text-[9px] text-[#FFF1E6]/40 truncate">{member.location}</span>
+                              <span className="text-[9px] text-[#FFF1E6]/40 truncate">
+                                {member.location}
+                              </span>
                               <span className="text-[#FFF1E6]/15">&middot;</span>
-                              <span className="text-[9px] text-[#FFF1E6]/30">{member.lastSync}</span>
+                              <span className="text-[9px] text-[#FFF1E6]/30">
+                                {member.lastSync}
+                              </span>
                             </div>
                           </div>
 
@@ -633,13 +748,18 @@ export default function Dashboard() {
                               <Heart
                                 size={9}
                                 style={{
-                                  color: member.heartRate > 100 ? "#E8524A" : "rgba(255,241,230,0.3)",
-                                  animation: member.heartRate > 100 ? "heartbeat 1.5s infinite" : "none",
+                                  color:
+                                    member.heartRate > 100 ? '#E8524A' : 'rgba(255,241,230,0.3)',
+                                  animation:
+                                    member.heartRate > 100 ? 'heartbeat 1.5s infinite' : 'none',
                                 }}
                               />
                               <span
                                 className="text-[10px] font-bold"
-                                style={{ color: member.heartRate > 100 ? "#E8524A" : "rgba(255,241,230,0.6)" }}
+                                style={{
+                                  color:
+                                    member.heartRate > 100 ? '#E8524A' : 'rgba(255,241,230,0.6)',
+                                }}
                               >
                                 {member.heartRate}
                               </span>
@@ -654,7 +774,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </motion.div>
-                  );
+                  )
                 })}
               </div>
             </ScrollArea>
@@ -664,9 +784,10 @@ export default function Dashboard() {
           <div
             className="rounded-2xl overflow-hidden flex-shrink-0"
             style={{
-              background: "linear-gradient(180deg, rgba(255,241,230,0.04) 0%, rgba(255,241,230,0.015) 100%)",
-              border: "1px solid rgba(255,241,230,0.05)",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
+              background:
+                'linear-gradient(180deg, rgba(255,241,230,0.04) 0%, rgba(255,241,230,0.015) 100%)',
+              border: '1px solid rgba(255,241,230,0.05)',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
             }}
           >
             <div className="p-4 pb-2 flex items-center justify-between">
@@ -685,8 +806,8 @@ export default function Dashboard() {
             <ScrollArea className="h-[180px]">
               <div className="px-3 pb-3">
                 {deviceEvents.map((event, i) => {
-                  const IconComp = eventIconMap[event.icon] || eventIconMap.default;
-                  const priorityColor = eventPriorityColor(event.priority);
+                  const IconComp = eventIconMap[event.icon] || eventIconMap.default
+                  const priorityColor = eventPriorityColor(event.priority)
                   return (
                     <motion.div
                       key={event.id}
@@ -697,7 +818,10 @@ export default function Dashboard() {
                     >
                       <div
                         className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ background: `${priorityColor}15`, border: `1px solid ${priorityColor}20` }}
+                        style={{
+                          background: `${priorityColor}15`,
+                          border: `1px solid ${priorityColor}20`,
+                        }}
                       >
                         <IconComp size={11} style={{ color: priorityColor }} />
                       </div>
@@ -709,9 +833,11 @@ export default function Dashboard() {
                           {event.memberName}
                         </span>
                       </div>
-                      <span className="text-[8px] text-[#FFF1E6]/20 flex-shrink-0">{event.timestamp}</span>
+                      <span className="text-[8px] text-[#FFF1E6]/20 flex-shrink-0">
+                        {event.timestamp}
+                      </span>
                     </motion.div>
-                  );
+                  )
                 })}
               </div>
             </ScrollArea>
@@ -730,12 +856,12 @@ export default function Dashboard() {
           <div
             className="h-full rounded-2xl overflow-hidden relative"
             style={{
-              border: "1px solid rgba(255,241,230,0.06)",
-              boxShadow: "0 8px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,241,230,0.05)",
+              border: '1px solid rgba(255,241,230,0.06)',
+              boxShadow: '0 8px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,241,230,0.05)',
             }}
           >
             <AnimatePresence mode="wait">
-              {viewMode === "map" ? (
+              {viewMode === 'map' ? (
                 <motion.div
                   key="map-view"
                   initial={{ opacity: 0 }}
@@ -775,15 +901,15 @@ export default function Dashboard() {
               <div
                 className="px-3 py-1.5 rounded-full text-[9px] font-medium tracking-[0.15em] uppercase flex items-center gap-1.5 pointer-events-none"
                 style={{
-                  background: "rgba(12,6,4,0.8)",
-                  border: "1px solid rgba(232,82,74,0.15)",
-                  color: "#E8524A",
-                  backdropFilter: "blur(12px)",
+                  background: 'rgba(12,6,4,0.8)',
+                  border: '1px solid rgba(232,82,74,0.15)',
+                  color: '#E8524A',
+                  backdropFilter: 'blur(12px)',
                   fontFamily: "'DM Sans', sans-serif",
                 }}
               >
                 <Eye size={10} className="opacity-50" />
-                {viewMode === "map" ? "Live View" : "3D Terrain"}
+                {viewMode === 'map' ? 'Live View' : '3D Terrain'}
                 <span className="w-1.5 h-1.5 rounded-full bg-[#E8524A] ml-1 animate-pulse" />
               </div>
 
@@ -791,17 +917,17 @@ export default function Dashboard() {
               <div
                 className="flex items-center gap-0.5 p-0.5 rounded-full pointer-events-auto"
                 style={{
-                  background: "rgba(12,6,4,0.8)",
-                  border: "1px solid rgba(232,82,74,0.15)",
-                  backdropFilter: "blur(12px)",
+                  background: 'rgba(12,6,4,0.8)',
+                  border: '1px solid rgba(232,82,74,0.15)',
+                  backdropFilter: 'blur(12px)',
                 }}
               >
                 <button
-                  onClick={() => setViewMode("map")}
+                  onClick={() => setViewMode('map')}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[9px] font-medium transition-all duration-300"
                   style={{
-                    background: viewMode === "map" ? "rgba(232,82,74,0.2)" : "transparent",
-                    color: viewMode === "map" ? "#E8524A" : "rgba(255,241,230,0.35)",
+                    background: viewMode === 'map' ? 'rgba(232,82,74,0.2)' : 'transparent',
+                    color: viewMode === 'map' ? '#E8524A' : 'rgba(255,241,230,0.35)',
                     fontFamily: "'DM Sans', sans-serif",
                   }}
                 >
@@ -809,11 +935,11 @@ export default function Dashboard() {
                   2D
                 </button>
                 <button
-                  onClick={() => setViewMode("3d")}
+                  onClick={() => setViewMode('3d')}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[9px] font-medium transition-all duration-300"
                   style={{
-                    background: viewMode === "3d" ? "rgba(232,82,74,0.2)" : "transparent",
-                    color: viewMode === "3d" ? "#E8524A" : "rgba(255,241,230,0.35)",
+                    background: viewMode === '3d' ? 'rgba(232,82,74,0.2)' : 'transparent',
+                    color: viewMode === '3d' ? '#E8524A' : 'rgba(255,241,230,0.35)',
                     fontFamily: "'DM Sans', sans-serif",
                   }}
                 >
@@ -824,23 +950,30 @@ export default function Dashboard() {
             </div>
 
             {/* Mobile tab switcher overlay */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 lg:hidden flex items-center gap-1 p-1 rounded-full" style={{ background: "rgba(12,6,4,0.85)", border: "1px solid rgba(255,241,230,0.08)", backdropFilter: "blur(12px)" }}>
+            <div
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 lg:hidden flex items-center gap-1 p-1 rounded-full"
+              style={{
+                background: 'rgba(12,6,4,0.85)',
+                border: '1px solid rgba(255,241,230,0.08)',
+                backdropFilter: 'blur(12px)',
+              }}
+            >
               <button
-                onClick={() => setActiveTab("map")}
+                onClick={() => setActiveTab('map')}
                 className="px-3 py-1.5 rounded-full text-[10px] font-medium transition-all"
                 style={{
-                  background: activeTab === "map" ? "rgba(255,241,230,0.1)" : "transparent",
-                  color: activeTab === "map" ? "#FFF1E6" : "rgba(255,241,230,0.4)",
+                  background: activeTab === 'map' ? 'rgba(255,241,230,0.1)' : 'transparent',
+                  color: activeTab === 'map' ? '#FFF1E6' : 'rgba(255,241,230,0.4)',
                 }}
               >
                 Map
               </button>
               <button
-                onClick={() => setActiveTab("alerts")}
+                onClick={() => setActiveTab('alerts')}
                 className="px-3 py-1.5 rounded-full text-[10px] font-medium transition-all flex items-center gap-1"
                 style={{
-                  background: activeTab === "alerts" ? "rgba(232,82,74,0.15)" : "transparent",
-                  color: activeTab === "alerts" ? "#E8524A" : "rgba(255,241,230,0.4)",
+                  background: activeTab === 'alerts' ? 'rgba(232,82,74,0.15)' : 'transparent',
+                  color: activeTab === 'alerts' ? '#E8524A' : 'rgba(255,241,230,0.4)',
                 }}
               >
                 Alerts
@@ -856,9 +989,9 @@ export default function Dashboard() {
             RIGHT PANEL - Detail / Alerts
             ══════════════════════════════════ */}
         <AnimatePresence mode="wait">
-          {(selectedMember || activeTab === "alerts") && (
+          {(selectedMember || activeTab === 'alerts') && (
             <motion.aside
-              key={selectedMember ? "member-detail" : "alerts"}
+              key={selectedMember ? 'member-detail' : 'alerts'}
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: 340 }}
               exit={{ opacity: 0, width: 0 }}
@@ -868,9 +1001,10 @@ export default function Dashboard() {
               <div
                 className="h-full rounded-2xl overflow-hidden flex flex-col"
                 style={{
-                  background: "linear-gradient(180deg, rgba(255,241,230,0.05) 0%, rgba(255,241,230,0.02) 100%)",
-                  border: "1px solid rgba(255,241,230,0.06)",
-                  boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
+                  background:
+                    'linear-gradient(180deg, rgba(255,241,230,0.05) 0%, rgba(255,241,230,0.02) 100%)',
+                  border: '1px solid rgba(255,241,230,0.06)',
+                  boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
                 }}
               >
                 {selectedMemberData ? (
@@ -886,7 +1020,10 @@ export default function Dashboard() {
                         <div className="relative">
                           <AlertTriangle size={13} className="text-[#E8524A]" />
                           {activeAlerts.length > 0 && (
-                            <div className="absolute -inset-1 rounded-full animate-pulse-ring" style={{ background: "rgba(232,82,74,0.3)" }} />
+                            <div
+                              className="absolute -inset-1 rounded-full animate-pulse-ring"
+                              style={{ background: 'rgba(232,82,74,0.3)' }}
+                            />
                           )}
                         </div>
                         <h2
@@ -897,15 +1034,15 @@ export default function Dashboard() {
                         </h2>
                         <span
                           className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                          style={{ background: "rgba(232,82,74,0.2)", color: "#E8524A" }}
+                          style={{ background: 'rgba(232,82,74,0.2)', color: '#E8524A' }}
                         >
                           {activeAlerts.length} active
                         </span>
                       </div>
                       <button
-                        onClick={() => setActiveTab("map")}
+                        onClick={() => setActiveTab('map')}
                         className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-[#FFF1E6]/10"
-                        style={{ background: "rgba(255,241,230,0.05)" }}
+                        style={{ background: 'rgba(255,241,230,0.05)' }}
                       >
                         <X size={10} className="text-[#FFF1E6]/40" />
                       </button>
@@ -914,9 +1051,9 @@ export default function Dashboard() {
                     <ScrollArea className="flex-1">
                       <div className="px-3 pb-3 space-y-2.5">
                         {panicEvents.map((event, i) => {
-                          const style = panicSeverityStyle(event.severity);
-                          const IconComp = panicTypeIcon(event.type);
-                          const isExpanded = expandedPanic === event.id;
+                          const style = panicSeverityStyle(event.severity)
+                          const IconComp = panicTypeIcon(event.type)
+                          const isExpanded = expandedPanic === event.id
 
                           return (
                             <motion.div
@@ -929,15 +1066,19 @@ export default function Dashboard() {
                             >
                               <div
                                 className="rounded-xl p-3.5 transition-all duration-300 relative overflow-hidden"
-                                style={{ background: style.bg, border: `1px solid ${style.border}` }}
+                                style={{
+                                  background: style.bg,
+                                  border: `1px solid ${style.border}`,
+                                }}
                               >
                                 {style.pulse && (
                                   <div
                                     className="absolute inset-0 pointer-events-none"
                                     style={{
-                                      background: "linear-gradient(90deg, transparent 0%, rgba(232,82,74,0.04) 50%, transparent 100%)",
-                                      backgroundSize: "200% 100%",
-                                      animation: "shimmer 3s ease-in-out infinite",
+                                      background:
+                                        'linear-gradient(90deg, transparent 0%, rgba(232,82,74,0.04) 50%, transparent 100%)',
+                                      backgroundSize: '200% 100%',
+                                      animation: 'shimmer 3s ease-in-out infinite',
                                     }}
                                   />
                                 )}
@@ -945,21 +1086,31 @@ export default function Dashboard() {
                                   <div className="flex items-start gap-2.5">
                                     <div
                                       className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                                      style={{ background: style.badgeBg, border: `1px solid ${style.badge}25` }}
+                                      style={{
+                                        background: style.badgeBg,
+                                        border: `1px solid ${style.badge}25`,
+                                      }}
                                     >
                                       <IconComp size={14} style={{ color: style.badge }} />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center gap-1.5 mb-0.5">
-                                        <span className="text-[11px] font-semibold text-[#FFF1E6]/90">{event.title}</span>
+                                        <span className="text-[11px] font-semibold text-[#FFF1E6]/90">
+                                          {event.title}
+                                        </span>
                                         {event.resolved && (
-                                          <span className="text-[8px] text-[#7B8F4E]/70 font-medium bg-[#7B8F4E]/10 px-1.5 py-0.5 rounded-full">Resolved</span>
+                                          <span className="text-[8px] text-[#7B8F4E]/70 font-medium bg-[#7B8F4E]/10 px-1.5 py-0.5 rounded-full">
+                                            Resolved
+                                          </span>
                                         )}
                                       </div>
                                       <div className="flex items-center gap-1.5 text-[9px] text-[#FFF1E6]/35">
                                         <span
                                           className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold"
-                                          style={{ background: `${event.avatarColor}30`, color: event.avatarColor }}
+                                          style={{
+                                            background: `${event.avatarColor}30`,
+                                            color: event.avatarColor,
+                                          }}
                                         >
                                           {event.avatar}
                                         </span>
@@ -971,7 +1122,9 @@ export default function Dashboard() {
                                     <ChevronDown
                                       size={12}
                                       className="text-[#FFF1E6]/25 flex-shrink-0 mt-1 transition-transform duration-300"
-                                      style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}
+                                      style={{
+                                        transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                      }}
                                     />
                                   </div>
 
@@ -979,22 +1132,34 @@ export default function Dashboard() {
                                     {isExpanded && (
                                       <motion.div
                                         initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
                                         transition={{ duration: 0.25, ease }}
                                         className="overflow-hidden"
                                       >
-                                        <div className="pt-3 mt-3" style={{ borderTop: `1px solid ${style.border}` }}>
-                                          <p className="text-[10px] text-[#FFF1E6]/50 leading-relaxed mb-3">{event.detail}</p>
+                                        <div
+                                          className="pt-3 mt-3"
+                                          style={{ borderTop: `1px solid ${style.border}` }}
+                                        >
+                                          <p className="text-[10px] text-[#FFF1E6]/50 leading-relaxed mb-3">
+                                            {event.detail}
+                                          </p>
                                           <div className="flex flex-wrap gap-1.5 mb-3">
                                             {event.metrics.map((metric) => (
                                               <div
                                                 key={metric.label}
                                                 className="flex items-center gap-1 px-2 py-1 rounded-lg"
-                                                style={{ background: "rgba(255,241,230,0.04)", border: "1px solid rgba(255,241,230,0.06)" }}
+                                                style={{
+                                                  background: 'rgba(255,241,230,0.04)',
+                                                  border: '1px solid rgba(255,241,230,0.06)',
+                                                }}
                                               >
-                                                <span className="text-[8px] text-[#FFF1E6]/35 uppercase tracking-wide">{metric.label}</span>
-                                                <span className="text-[10px] font-bold text-[#FFF1E6]/75">{metric.value}</span>
+                                                <span className="text-[8px] text-[#FFF1E6]/35 uppercase tracking-wide">
+                                                  {metric.label}
+                                                </span>
+                                                <span className="text-[10px] font-bold text-[#FFF1E6]/75">
+                                                  {metric.value}
+                                                </span>
                                               </div>
                                             ))}
                                           </div>
@@ -1006,14 +1171,17 @@ export default function Dashboard() {
                                             <div className="flex items-center gap-2 mt-3">
                                               <button
                                                 className="text-[10px] font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.02]"
-                                                style={{ background: "#E8524A", color: "#FFF1E6" }}
+                                                style={{ background: '#E8524A', color: '#FFF1E6' }}
                                                 onClick={(e) => e.stopPropagation()}
                                               >
-                                                Contact {event.memberName.split(" ")[0]}
+                                                Contact {event.memberName.split(' ')[0]}
                                               </button>
                                               <button
                                                 className="text-[10px] font-medium px-3 py-1.5 rounded-lg text-[#FFF1E6]/50 hover:text-[#FFF1E6]/80"
-                                                style={{ background: "rgba(255,241,230,0.05)", border: "1px solid rgba(255,241,230,0.08)" }}
+                                                style={{
+                                                  background: 'rgba(255,241,230,0.05)',
+                                                  border: '1px solid rgba(255,241,230,0.08)',
+                                                }}
                                                 onClick={(e) => e.stopPropagation()}
                                               >
                                                 Resolve
@@ -1027,7 +1195,7 @@ export default function Dashboard() {
                                 </div>
                               </div>
                             </motion.div>
-                          );
+                          )
                         })}
                       </div>
                     </ScrollArea>
@@ -1045,7 +1213,7 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.5, ease }}
         className="relative z-10 flex-shrink-0 px-5 md:px-7 py-3 flex items-center justify-between"
-        style={{ borderTop: "1px solid rgba(255,241,230,0.04)" }}
+        style={{ borderTop: '1px solid rgba(255,241,230,0.04)' }}
       >
         <div className="flex items-center gap-3 overflow-hidden flex-1 mr-4">
           <span
@@ -1057,24 +1225,31 @@ export default function Dashboard() {
           <div className="overflow-hidden flex-1">
             <div
               className="flex items-center gap-6 whitespace-nowrap"
-              style={{ animation: "ticker-scroll 40s linear infinite" }}
+              style={{ animation: 'ticker-scroll 40s linear infinite' }}
             >
               {[...deviceEvents, ...deviceEvents].map((event, i) => {
-                const color = eventPriorityColor(event.priority);
+                const color = eventPriorityColor(event.priority)
                 return (
-                  <span key={`${event.id}-${i}`} className="flex items-center gap-1.5 text-[9px] text-[#FFF1E6]/25" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+                  <span
+                    key={`${event.id}-${i}`}
+                    className="flex items-center gap-1.5 text-[9px] text-[#FFF1E6]/25"
+                    style={{ fontFamily: "'DM Sans', sans-serif" }}
+                  >
                     <span className="w-1 h-1 rounded-full" style={{ background: color }} />
                     <span className="text-[#FFF1E6]/40 font-medium">{event.memberName}</span>
                     {event.title}
                     <span className="text-[#FFF1E6]/15">{event.timestamp}</span>
                   </span>
-                );
+                )
               })}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
-          <span className="text-[8px] text-[#FFF1E6]/15" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          <span
+            className="text-[8px] text-[#FFF1E6]/15"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+          >
             Demo Mode
           </span>
           <span
@@ -1086,5 +1261,5 @@ export default function Dashboard() {
         </div>
       </motion.footer>
     </div>
-  );
+  )
 }

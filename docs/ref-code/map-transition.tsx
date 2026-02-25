@@ -1,63 +1,63 @@
-'use client';
+'use client'
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
-import { Loader2, Sparkles, Zap, Mountain, Satellite } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { Loader2, Sparkles, Zap, Mountain, Satellite } from 'lucide-react'
 
 interface MapTo3DTransitionProps {
-  isTransitioning: boolean;
-  onTransitionComplete: () => void;
-  locationName?: string | null;
+  isTransitioning: boolean
+  onTransitionComplete: () => void
+  locationName?: string | null
 }
 
 export function MapTo3DTransition({
   isTransitioning,
   onTransitionComplete,
-  locationName
+  locationName,
 }: MapTo3DTransitionProps) {
-  const [phase, setPhase] = useState<'zoom' | 'process' | 'reveal'>('zoom');
-  const [loadingText, setLoadingText] = useState('Initializing analysis...');
+  const [phase, setPhase] = useState<'zoom' | 'process' | 'reveal'>('zoom')
+  const [loadingText, setLoadingText] = useState('Initializing analysis...')
 
   useEffect(() => {
     if (isTransitioning) {
-      setPhase('zoom');
-      setLoadingText('Capturing satellite imagery...');
+      setPhase('zoom')
+      setLoadingText('Capturing satellite imagery...')
 
       // Phase 1: Zoom effect (0-800ms)
       const timer1 = setTimeout(() => {
-        setPhase('process');
-        setLoadingText('Processing terrain data...');
-      }, 800);
+        setPhase('process')
+        setLoadingText('Processing terrain data...')
+      }, 800)
 
       // Update loading text
       const timer2 = setTimeout(() => {
-        setLoadingText('Generating 3D topography...');
-      }, 1400);
+        setLoadingText('Generating 3D topography...')
+      }, 1400)
 
       const timer3 = setTimeout(() => {
-        setLoadingText('Initializing analysis engine...');
-      }, 2000);
+        setLoadingText('Initializing analysis engine...')
+      }, 2000)
 
       // Phase 2: Reveal (2500ms)
       const timer4 = setTimeout(() => {
-        setPhase('reveal');
-        setLoadingText('Launching visualization...');
-      }, 2500);
+        setPhase('reveal')
+        setLoadingText('Launching visualization...')
+      }, 2500)
 
       // Complete transition
       const timer5 = setTimeout(() => {
-        onTransitionComplete();
-      }, 3200);
+        onTransitionComplete()
+      }, 3200)
 
       return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-        clearTimeout(timer3);
-        clearTimeout(timer4);
-        clearTimeout(timer5);
-      };
+        clearTimeout(timer1)
+        clearTimeout(timer2)
+        clearTimeout(timer3)
+        clearTimeout(timer4)
+        clearTimeout(timer5)
+      }
     }
-  }, [isTransitioning, onTransitionComplete]);
+  }, [isTransitioning, onTransitionComplete])
 
   return (
     <AnimatePresence>
@@ -72,11 +72,15 @@ export function MapTo3DTransition({
           {/* Animated background gradient */}
           <motion.div
             className="absolute inset-0"
-            initial={{ background: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.4) 0%, rgba(226, 232, 240, 1) 100%)' }}
+            initial={{
+              background:
+                'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.4) 0%, rgba(226, 232, 240, 1) 100%)',
+            }}
             animate={{
-              background: phase === 'reveal'
-                ? 'radial-gradient(circle at 50% 50%, rgba(236, 253, 245, 0.9) 0%, rgba(226, 232, 240, 1) 100%)'
-                : 'radial-gradient(circle at 50% 50%, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 1) 100%)'
+              background:
+                phase === 'reveal'
+                  ? 'radial-gradient(circle at 50% 50%, rgba(236, 253, 245, 0.9) 0%, rgba(226, 232, 240, 1) 100%)'
+                  : 'radial-gradient(circle at 50% 50%, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 1) 100%)',
             }}
             transition={{ duration: 0.5 }}
           />
@@ -91,7 +95,8 @@ export function MapTo3DTransition({
                 transition={{ duration: 0.8, ease: 'easeIn' }}
                 className="absolute w-32 h-32 rounded-full border-2 border-primary/50"
                 style={{
-                  background: 'radial-gradient(circle, rgba(74, 222, 128, 0.3) 0%, transparent 70%)'
+                  background:
+                    'radial-gradient(circle, rgba(74, 222, 128, 0.3) 0%, transparent 70%)',
                 }}
               />
             )}
@@ -113,7 +118,7 @@ export function MapTo3DTransition({
                   duration: 2,
                   delay: i * 0.2,
                   repeat: Infinity,
-                  ease: 'easeOut'
+                  ease: 'easeOut',
                 }}
               />
             ))}
@@ -135,7 +140,7 @@ export function MapTo3DTransition({
                   duration: 1.5,
                   delay: i * 0.15,
                   repeat: Infinity,
-                  ease: 'linear'
+                  ease: 'linear',
                 }}
                 style={{ top: `${i * 12}%` }}
               />
@@ -158,14 +163,15 @@ export function MapTo3DTransition({
               transition={{
                 duration: 2,
                 repeat: Infinity,
-                ease: 'easeInOut'
+                ease: 'easeInOut',
               }}
             >
               {/* Outer glow ring */}
               <motion.div
                 className="absolute inset-0 rounded-full"
                 style={{
-                  background: 'radial-gradient(circle, rgba(74, 222, 128, 0.4) 0%, transparent 70%)',
+                  background:
+                    'radial-gradient(circle, rgba(74, 222, 128, 0.4) 0%, transparent 70%)',
                   filter: 'blur(20px)',
                 }}
                 animate={{
@@ -175,7 +181,7 @@ export function MapTo3DTransition({
                 transition={{
                   duration: 2,
                   repeat: Infinity,
-                  ease: 'easeInOut'
+                  ease: 'easeInOut',
                 }}
               />
 
@@ -224,7 +230,7 @@ export function MapTo3DTransition({
                     duration: 3,
                     delay: i * 0.3,
                     repeat: Infinity,
-                    ease: 'easeInOut'
+                    ease: 'easeInOut',
                   }}
                 />
               ))}
@@ -243,9 +249,7 @@ export function MapTo3DTransition({
                 Terrain Analysis
               </h2>
               <p className="text-sm text-muted-foreground">{loadingText}</p>
-              {locationName && (
-                <p className="text-xs text-primary/70 mt-1">{locationName}</p>
-              )}
+              {locationName && <p className="text-xs text-primary/70 mt-1">{locationName}</p>}
             </motion.div>
 
             {/* Progress dots */}
@@ -253,10 +257,9 @@ export function MapTo3DTransition({
               {['zoom', 'process', 'reveal'].map((p, i) => (
                 <motion.div
                   key={p}
-                  className={`w-2 h-2 rounded-full ${['zoom', 'process', 'reveal'].indexOf(phase) >= i
-                      ? 'bg-primary'
-                      : 'bg-muted'
-                    }`}
+                  className={`w-2 h-2 rounded-full ${
+                    ['zoom', 'process', 'reveal'].indexOf(phase) >= i ? 'bg-primary' : 'bg-muted'
+                  }`}
                   animate={{
                     scale: phase === p ? [1, 1.3, 1] : 1,
                   }}
@@ -331,7 +334,7 @@ export function MapTo3DTransition({
         </motion.div>
       )}
     </AnimatePresence>
-  );
+  )
 }
 
-export default MapTo3DTransition;
+export default MapTo3DTransition

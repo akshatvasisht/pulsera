@@ -1,43 +1,41 @@
-"use client";
+'use client'
 
-import { motion } from "motion/react";
-import Link from "next/link";
-import PulseraLogo from "./PulseraLogo";
+import { motion } from 'motion/react'
+import Link from 'next/link'
+import PulseraLogo from './PulseraLogo'
 
 interface NavbarProps {
-  variant?: "dark" | "light";
+  variant?: 'dark' | 'light'
 }
 
 const darkStyles = {
   glass: {
     background:
-      "linear-gradient(135deg, rgba(20, 8, 6, 0.72) 0%, rgba(35, 12, 10, 0.58) 50%, rgba(20, 8, 6, 0.65) 100%)",
-    backdropFilter: "blur(32px) saturate(1.4)",
-    WebkitBackdropFilter: "blur(32px) saturate(1.4)",
-    border: "1px solid rgba(255, 241, 230, 0.06)",
-    boxShadow:
-      "0 8px 64px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 241, 230, 0.04)",
+      'linear-gradient(135deg, rgba(20, 8, 6, 0.72) 0%, rgba(35, 12, 10, 0.58) 50%, rgba(20, 8, 6, 0.65) 100%)',
+    backdropFilter: 'blur(32px) saturate(1.4)',
+    WebkitBackdropFilter: 'blur(32px) saturate(1.4)',
+    border: '1px solid rgba(255, 241, 230, 0.06)',
+    boxShadow: '0 8px 64px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 241, 230, 0.04)',
   },
-  logoColor: "#FFF1E6",
-  linkClass: "text-[#FFF1E6]/50 hover:text-[#FFF1E6]/90",
-};
+  logoColor: '#FFF1E6',
+  linkClass: 'text-[#FFF1E6]/50 hover:text-[#FFF1E6]/90',
+}
 
 const lightStyles = {
   glass: {
     background:
-      "linear-gradient(135deg, rgba(250, 250, 247, 0.72) 0%, rgba(255, 255, 255, 0.58) 50%, rgba(250, 250, 247, 0.65) 100%)",
-    backdropFilter: "blur(32px) saturate(1.4)",
-    WebkitBackdropFilter: "blur(32px) saturate(1.4)",
-    border: "1px solid rgba(45, 36, 24, 0.08)",
-    boxShadow:
-      "0 4px 32px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5)",
+      'linear-gradient(135deg, rgba(250, 250, 247, 0.72) 0%, rgba(255, 255, 255, 0.58) 50%, rgba(250, 250, 247, 0.65) 100%)',
+    backdropFilter: 'blur(32px) saturate(1.4)',
+    WebkitBackdropFilter: 'blur(32px) saturate(1.4)',
+    border: '1px solid rgba(45, 36, 24, 0.08)',
+    boxShadow: '0 4px 32px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
   },
-  logoColor: "#2D2418",
-  linkClass: "text-[#2D2418]/50 hover:text-[#2D2418]/90",
-};
+  logoColor: '#2D2418',
+  linkClass: 'text-[#2D2418]/50 hover:text-[#2D2418]/90',
+}
 
-export default function Navbar({ variant = "dark" }: NavbarProps) {
-  const s = variant === "dark" ? darkStyles : lightStyles;
+export default function Navbar({ variant = 'dark' }: NavbarProps) {
+  const s = variant === 'dark' ? darkStyles : lightStyles
 
   return (
     <motion.nav
@@ -56,10 +54,7 @@ export default function Navbar({ variant = "dark" }: NavbarProps) {
         </Link>
 
         {/* Right: Nav links + CTA */}
-        <div
-          className="flex items-center gap-6"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
+        <div className="flex items-center gap-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
           <span
             className={`hidden md:inline text-sm font-medium tracking-wide uppercase cursor-pointer transition-colors duration-300 ${s.linkClass}`}
           >
@@ -94,5 +89,5 @@ export default function Navbar({ variant = "dark" }: NavbarProps) {
         </div>
       </div>
     </motion.nav>
-  );
+  )
 }
